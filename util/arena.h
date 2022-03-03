@@ -12,16 +12,16 @@
 
 namespace leveldb {
 
-class Arena {
+class Arena { // NOTE: htt, 提供内存分配机制，如果小内存则先缓存一部分，后续申请直接从缓存取
  public:
   Arena();
   ~Arena();
 
   // Return a pointer to a newly allocated memory block of "bytes" bytes.
-  char* Allocate(size_t bytes);
+  char* Allocate(size_t bytes); // NOTE: htt, 分配内存
 
   // Allocate memory with the normal alignment guarantees provided by malloc
-  char* AllocateAligned(size_t bytes);
+  char* AllocateAligned(size_t bytes); // NOTE: htt, 对齐分配内存
 
   // Returns an estimate of the total memory usage of data allocated
   // by the arena (including space allocated but not yet used for user
@@ -35,14 +35,14 @@ class Arena {
   char* AllocateNewBlock(size_t block_bytes);
 
   // Allocation state
-  char* alloc_ptr_;
-  size_t alloc_bytes_remaining_;
+  char* alloc_ptr_; // NOTE: htt, 空闲内存的起始位置
+  size_t alloc_bytes_remaining_; // NOTE: htt, 当前有的剩余空闲内存
 
   // Array of new[] allocated memory blocks
-  std::vector<char*> blocks_;
+  std::vector<char*> blocks_; // NOTE: htt, 已分配的内存
 
   // Bytes of memory in blocks allocated so far
-  size_t blocks_memory_;
+  size_t blocks_memory_; // NOTE: htt, 已经分配的内存
 
   // No copying allowed
   Arena(const Arena&);
