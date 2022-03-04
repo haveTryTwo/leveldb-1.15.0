@@ -77,12 +77,12 @@
 namespace leveldb {
 namespace port {
 
-static const bool kLittleEndian = PLATFORM_IS_LITTLE_ENDIAN;
+static const bool kLittleEndian = PLATFORM_IS_LITTLE_ENDIAN; // NOTE: htt, CPU是否为小端模式，支持不用机型判断
 #undef PLATFORM_IS_LITTLE_ENDIAN
 
 class CondVar;
 
-class Mutex {
+class Mutex { // NOTE: htt, 互斥锁
  public:
   Mutex();
   ~Mutex();
@@ -100,7 +100,7 @@ class Mutex {
   void operator=(const Mutex&);
 };
 
-class CondVar {
+class CondVar { // NOTE: htt, 条件变量
  public:
   explicit CondVar(Mutex* mu);
   ~CondVar();
@@ -117,7 +117,7 @@ typedef pthread_once_t OnceType;
 extern void InitOnce(OnceType* once, void (*initializer)());
 
 inline bool Snappy_Compress(const char* input, size_t length,
-                            ::std::string* output) {
+                            ::std::string* output) { // NOTE: htt, snappy压缩{{{
 #ifdef SNAPPY
   output->resize(snappy::MaxCompressedLength(length));
   size_t outlen;
@@ -127,19 +127,19 @@ inline bool Snappy_Compress(const char* input, size_t length,
 #endif
 
   return false;
-}
+}/*}}}*/
 
 inline bool Snappy_GetUncompressedLength(const char* input, size_t length,
-                                         size_t* result) {
+                                         size_t* result) { // NOTE: htt, 获取snappy解压缩后的长度{{{
 #ifdef SNAPPY
   return snappy::GetUncompressedLength(input, length, result);
 #else
   return false;
 #endif
-}
+}/*}}}*/
 
 inline bool Snappy_Uncompress(const char* input, size_t length,
-                              char* output) {
+                              char* output) { // NOTE: htt, snappy解压缩
 #ifdef SNAPPY
   return snappy::RawUncompress(input, length, output);
 #else

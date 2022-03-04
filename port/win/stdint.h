@@ -11,7 +11,7 @@
 #error This file should only be included when compiling with MSVC.
 #endif
 
-// Define C99 equivalent types.
+// Define C99 equivalent types. // NOTE: htt, 定义stdint中相等的类型
 typedef signed char           int8_t;
 typedef signed short          int16_t;
 typedef signed int            int32_t;

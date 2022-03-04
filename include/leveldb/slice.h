@@ -22,7 +22,7 @@
 
 namespace leveldb {
 
-class Slice {
+class Slice { // NOTE: htt, 提供一个字符串片段引用类型
  public:
   // Create an empty slice.
   Slice() : data_(""), size_(0) { }
@@ -78,8 +78,8 @@ class Slice {
   }
 
  private:
-  const char* data_;
-  size_t size_;
+  const char* data_; // NOTE: htt, slice引用字符串指针
+  size_t size_; // NOTE: htt, slice引用字符串长度
 
   // Intentionally copyable
 };
@@ -93,7 +93,7 @@ inline bool operator!=(const Slice& x, const Slice& y) {
   return !(x == y);
 }
 
-inline int Slice::compare(const Slice& b) const {
+inline int Slice::compare(const Slice& b) const { // NOTE: htt, 判断两个slice大小
   const int min_len = (size_ < b.size_) ? size_ : b.size_;
   int r = memcmp(data_, b.data_, min_len);
   if (r == 0) {

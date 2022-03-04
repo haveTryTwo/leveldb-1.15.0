@@ -12,38 +12,38 @@
 namespace leveldb {
 namespace port {
 
-static void PthreadCall(const char* label, int result) {
-  if (result != 0) {
+static void PthreadCall(const char* label, int result) { // NOTE: htt, 线程调用，不满足条件则退出
+  if (result != 0) { // NOTE: htt, result不为0值，打印并退出
     fprintf(stderr, "pthread %s: %s\n", label, strerror(result));
     abort();
   }
 }
 
-Mutex::Mutex() { PthreadCall("init mutex", pthread_mutex_init(&mu_, NULL)); }
+Mutex::Mutex() { PthreadCall("init mutex", pthread_mutex_init(&mu_, NULL)); } // NOTE: htt, 初始化锁
 
-Mutex::~Mutex() { PthreadCall("destroy mutex", pthread_mutex_destroy(&mu_)); }
+Mutex::~Mutex() { PthreadCall("destroy mutex", pthread_mutex_destroy(&mu_)); } // NOTE: htt, 销毁锁
 
-void Mutex::Lock() { PthreadCall("lock", pthread_mutex_lock(&mu_)); }
+void Mutex::Lock() { PthreadCall("lock", pthread_mutex_lock(&mu_)); } // NOTE: htt, 加锁
 
-void Mutex::Unlock() { PthreadCall("unlock", pthread_mutex_unlock(&mu_)); }
+void Mutex::Unlock() { PthreadCall("unlock", pthread_mutex_unlock(&mu_)); } // NOTE: htt, 放锁
 
 CondVar::CondVar(Mutex* mu)
     : mu_(mu) {
-    PthreadCall("init cv", pthread_cond_init(&cv_, NULL));
+    PthreadCall("init cv", pthread_cond_init(&cv_, NULL)); // NOTE: ht, 初始化信号量
 }
 
-CondVar::~CondVar() { PthreadCall("destroy cv", pthread_cond_destroy(&cv_)); }
+CondVar::~CondVar() { PthreadCall("destroy cv", pthread_cond_destroy(&cv_)); } // NOTE: htt, 销毁信号量
 
 void CondVar::Wait() {
-  PthreadCall("wait", pthread_cond_wait(&cv_, &mu_->mu_));
+  PthreadCall("wait", pthread_cond_wait(&cv_, &mu_->mu_)); // NOTE: htt, 信号量等待
 }
 
 void CondVar::Signal() {
-  PthreadCall("signal", pthread_cond_signal(&cv_));
+  PthreadCall("signal", pthread_cond_signal(&cv_)); // NOTE: htt,  通知信号量等待,至少激活一个等待线程
 }
 
 void CondVar::SignalAll() {
-  PthreadCall("broadcast", pthread_cond_broadcast(&cv_));
+  PthreadCall("broadcast", pthread_cond_broadcast(&cv_)); // NOTE: htt, 激活所有在当前条件阻塞的线程
 }
 
 void InitOnce(OnceType* once, void (*initializer)()) {

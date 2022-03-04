@@ -52,14 +52,14 @@ namespace port {
 
 // Mac OS
 #elif defined(OS_MACOSX)
-inline void MemoryBarrier() {
+inline void MemoryBarrier() { // NOTE: htt, 内存屏障
   OSMemoryBarrier();
 }
 #define LEVELDB_HAVE_MEMORY_BARRIER
 
 // Gcc on x86
 #elif defined(ARCH_CPU_X86_FAMILY) && defined(__GNUC__)
-inline void MemoryBarrier() {
+inline void MemoryBarrier() { // NOTE: htt, 内存屏障
   // See http://gcc.gnu.org/ml/gcc/2003-04/msg01180.html for a discussion on
   // this idiom. Also see http://en.wikipedia.org/wiki/Memory_ordering.
   __asm__ __volatile__("" : : : "memory");
@@ -68,7 +68,7 @@ inline void MemoryBarrier() {
 
 // Sun Studio
 #elif defined(ARCH_CPU_X86_FAMILY) && defined(__SUNPRO_CC)
-inline void MemoryBarrier() {
+inline void MemoryBarrier() { // NOTE: htt, 内存屏障
   // See http://gcc.gnu.org/ml/gcc/2003-04/msg01180.html for a discussion on
   // this idiom. Also see http://en.wikipedia.org/wiki/Memory_ordering.
   asm volatile("" : : : "memory");
@@ -88,14 +88,14 @@ typedef void (*LinuxKernelMemoryBarrierFunc)(void);
 // shows that the extra function call cost is completely negligible on
 // multi-core devices.
 //
-inline void MemoryBarrier() {
+inline void MemoryBarrier() { // NOTE: htt, 内存屏障
   (*(LinuxKernelMemoryBarrierFunc)0xffff0fa0)();
 }
 #define LEVELDB_HAVE_MEMORY_BARRIER
 
 // PPC
 #elif defined(ARCH_CPU_PPC_FAMILY) && defined(__GNUC__)
-inline void MemoryBarrier() {
+inline void MemoryBarrier() { // NOTE: htt, 内存屏障
   // TODO for some powerpc expert: is there a cheaper suitable variant?
   // Perhaps by having separate barriers for acquire and release ops.
   asm volatile("sync" : : : "memory");
@@ -114,13 +114,13 @@ class AtomicPointer {
   explicit AtomicPointer(void* p) : rep_(p) {}
   inline void* NoBarrier_Load() const { return rep_; }
   inline void NoBarrier_Store(void* v) { rep_ = v; }
-  inline void* Acquire_Load() const {
+  inline void* Acquire_Load() const { // NOTE: htt, 带内存屏障读取
     void* result = rep_;
-    MemoryBarrier();
+    MemoryBarrier(); // NOTE: htt, 保证之前的内存可见
     return result;
   }
   inline void Release_Store(void* v) {
-    MemoryBarrier();
+    MemoryBarrier(); // NOTE: htt, 保证之前内容可见
     rep_ = v;
   }
 };
@@ -137,10 +137,10 @@ class AtomicPointer {
     return rep_.load(std::memory_order_acquire);
   }
   inline void Release_Store(void* v) {
-    rep_.store(v, std::memory_order_release);
+    rep_.store(v, std::memory_order_release); // NOTE: htt,在本线程中，所有之前的针对该变量的内存操作完成后才能执行本条原子操作 
   }
   inline void* NoBarrier_Load() const {
-    return rep_.load(std::memory_order_relaxed);
+    return rep_.load(std::memory_order_relaxed); // NOTE: htt, 本线程中，所有后续的关于此变量的内存操作都必须在本条原子操作完成后执行
   }
   inline void NoBarrier_Store(void* v) {
     rep_.store(v, std::memory_order_relaxed);
@@ -163,7 +163,7 @@ class AtomicPointer {
         : [val] "=r" (val)
         : [rep_] "r" (&rep_)
         : "memory");
-    return val;
+    return val; // NOTE: htt, 带内存屏障读
   }
   inline void Release_Store(void* v) {
     __asm__ __volatile__ (
@@ -171,7 +171,7 @@ class AtomicPointer {
         "stx %[v], [%[rep_]] \n\t"
         :
         : [rep_] "r" (&rep_), [v] "r" (v)
-        : "memory");
+        : "memory"); // NOTE: htt, 带内存屏障写
   }
   inline void* NoBarrier_Load() const { return rep_; }
   inline void NoBarrier_Store(void* v) { rep_ = v; }
@@ -193,7 +193,7 @@ class AtomicPointer {
         : [rep_] "r" (&rep_)
         : "memory"
         );
-    return val;
+    return val; // NOTE: htt, 带内存屏障读
   }
   inline void Release_Store(void* v) {
     __asm__ __volatile__ (
@@ -201,7 +201,7 @@ class AtomicPointer {
         :
         : [rep_] "r" (&rep_), [v] "r" (v)
         : "memory"
-        );
+        ); // NOTE: htt, 带内存屏障读
   }
   inline void* NoBarrier_Load() const { return rep_; }
   inline void NoBarrier_Store(void* v) { rep_ = v; }

@@ -39,7 +39,7 @@ char* Arena::AllocateFallback(size_t bytes) { // NOTE: htt, 重新申请内存�
   return result;
 }
 
-char* Arena::AllocateAligned(size_t bytes) { // NOTE: htt, 按8长度对齐地址
+char* Arena::AllocateAligned(size_t bytes) { // NOTE: htt, 按8长度对齐地址{{{
   const int align = (sizeof(void*) > 8) ? sizeof(void*) : 8;
   assert((align & (align-1)) == 0);   // Pointer size should be a power of 2
   size_t current_mod = reinterpret_cast<uintptr_t>(alloc_ptr_) & (align-1);
@@ -56,7 +56,7 @@ char* Arena::AllocateAligned(size_t bytes) { // NOTE: htt, 按8长度对齐地�
   }
   assert((reinterpret_cast<uintptr_t>(result) & (align-1)) == 0); // NOTE: htt, 确认地址为补齐地址
   return result;
-}
+}/*}}}*/
 
 char* Arena::AllocateNewBlock(size_t block_bytes) { // NOTE: htt, 分配新的内存
   char* result = new char[block_bytes];
