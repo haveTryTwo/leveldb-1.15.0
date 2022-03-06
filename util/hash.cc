@@ -15,7 +15,7 @@
 
 namespace leveldb {
 
-uint32_t Hash(const char* data, size_t n, uint32_t seed) {
+uint32_t Hash(const char* data, size_t n, uint32_t seed) { // NOTE: htt, murmur hash 相同的hash
   // Similar to murmur hash
   const uint32_t m = 0xc6a4a793;
   const uint32_t r = 24;
@@ -32,13 +32,13 @@ uint32_t Hash(const char* data, size_t n, uint32_t seed) {
   }
 
   // Pick up remaining bytes
-  switch (limit - data) {
+  switch (limit - data) { // NOTE: htt, 单独处理4字节的内容
     case 3:
       h += data[2] << 16;
-      FALLTHROUGH_INTENDED;
+      FALLTHROUGH_INTENDED; // NOTE: htt, 继续 data[1], data[0]
     case 2:
       h += data[1] << 8;
-      FALLTHROUGH_INTENDED;
+      FALLTHROUGH_INTENDED; // NOTE: htt, 继续 data[0]
     case 1:
       h += data[0];
       h *= m;
