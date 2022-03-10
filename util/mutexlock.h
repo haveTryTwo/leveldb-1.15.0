@@ -20,16 +20,16 @@ namespace leveldb {
 //     ... some complex code, possibly with multiple return paths ...
 //   }
 
-class SCOPED_LOCKABLE MutexLock {
+class SCOPED_LOCKABLE MutexLock { // NOTE: htt, 采用对象方式管理锁，减少锁释放失败可能
  public:
   explicit MutexLock(port::Mutex *mu) EXCLUSIVE_LOCK_FUNCTION(mu)
       : mu_(mu)  {
-    this->mu_->Lock();
+    this->mu_->Lock(); // NOTE: htt, 构造时，则加锁
   }
-  ~MutexLock() UNLOCK_FUNCTION() { this->mu_->Unlock(); }
+  ~MutexLock() UNLOCK_FUNCTION() { this->mu_->Unlock(); } // NOTE: htt, 析构时则放锁
 
  private:
-  port::Mutex *const mu_;
+  port::Mutex *const mu_; // NOTE: htt, 待处理的锁
   // No copying allowed
   MutexLock(const MutexLock&);
   void operator=(const MutexLock&);

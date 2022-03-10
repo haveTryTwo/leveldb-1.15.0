@@ -8,32 +8,32 @@
 
 namespace leveldb {
 
-const char* Status::CopyState(const char* state) {
+const char* Status::CopyState(const char* state) { // NOTE: htt, 复制 state字符串到字符串数组中
   uint32_t size;
-  memcpy(&size, state, sizeof(size));
+  memcpy(&size, state, sizeof(size)); // NOTE: htt, 获取头部4个长度
   char* result = new char[size + 5];
   memcpy(result, state, size + 5);
   return result;
 }
 
-Status::Status(Code code, const Slice& msg, const Slice& msg2) {
+Status::Status(Code code, const Slice& msg, const Slice& msg2) { // NOTE: htt, 根据 code,msg,msg2 生成 state_ 内容
   assert(code != kOk);
   const uint32_t len1 = msg.size();
   const uint32_t len2 = msg2.size();
-  const uint32_t size = len1 + (len2 ? (2 + len2) : 0);
+  const uint32_t size = len1 + (len2 ? (2 + len2) : 0); // NOTE: htt, 如果 msg2不为空，则追加两个额外的字符 : 
   char* result = new char[size + 5];
-  memcpy(result, &size, sizeof(size));
-  result[4] = static_cast<char>(code);
+  memcpy(result, &size, sizeof(size)); // NOTE: htt, state_[0..3] 为size，长度
+  result[4] = static_cast<char>(code); // NOTE: htt, state_[4]为code
   memcpy(result + 5, msg.data(), len1);
   if (len2) {
-    result[5 + len1] = ':';
+    result[5 + len1] = ':'; // NOTE: htt, 追加两个字符串 : ，即 msg: msg2
     result[6 + len1] = ' ';
     memcpy(result + 7 + len1, msg2.data(), len2);
   }
   state_ = result;
 }
 
-std::string Status::ToString() const {
+std::string Status::ToString() const { // NOTE: htt, 生成异常状态可读字符串
   if (state_ == NULL) {
     return "OK";
   } else {

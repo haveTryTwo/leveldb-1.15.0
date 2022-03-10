@@ -15,7 +15,7 @@ class Slice;
 // used as keys in an sstable or a database.  A Comparator implementation
 // must be thread-safe since leveldb may invoke its methods concurrently
 // from multiple threads.
-class Comparator {
+class Comparator { // NOTE: htt, slice比较器，需要线程安全
  public:
   virtual ~Comparator();
 
@@ -45,12 +45,12 @@ class Comparator {
   // i.e., an implementation of this method that does nothing is correct.
   virtual void FindShortestSeparator(
       std::string* start,
-      const Slice& limit) const = 0;
+      const Slice& limit) const = 0; // NOTE: htt, 找到 比start大，比limit小的最小字符串
 
   // Changes *key to a short string >= *key.
   // Simple comparator implementations may return with *key unchanged,
   // i.e., an implementation of this method that does nothing is correct.
-  virtual void FindShortSuccessor(std::string* key) const = 0;
+  virtual void FindShortSuccessor(std::string* key) const = 0; // NOTE: htt, 找到比key大的最小字符串
 };
 
 // Return a builtin comparator that uses lexicographic byte-wise

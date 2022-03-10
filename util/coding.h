@@ -88,7 +88,7 @@ extern const char* GetVarint32PtrFallback(const char* p,
                                           uint32_t* value);
 inline const char* GetVarint32Ptr(const char* p,
                                   const char* limit,
-                                  uint32_t* value) {
+                                  uint32_t* value) { // NOTE: htt, 将整数内容复制到 value，并递增p指针的位置
   if (p < limit) {
     uint32_t result = *(reinterpret_cast<const unsigned char*>(p));
     if ((result & 128) == 0) { // NOTE: htt, 高位为0，则已经是可变int最后一个字节

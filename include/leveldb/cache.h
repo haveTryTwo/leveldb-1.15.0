@@ -62,18 +62,18 @@ class Cache {
   // Release a mapping returned by a previous Lookup().
   // REQUIRES: handle must not have been released yet.
   // REQUIRES: handle must have been returned by a method on *this.
-  virtual void Release(Handle* handle) = 0;
+  virtual void Release(Handle* handle) = 0; // NOTE: htt, 释放Lookup()接口查询的<key,value>映射
 
   // Return the value encapsulated in a handle returned by a
   // successful Lookup().
   // REQUIRES: handle must not have been released yet.
   // REQUIRES: handle must have been returned by a method on *this.
-  virtual void* Value(Handle* handle) = 0;
+  virtual void* Value(Handle* handle) = 0; // NOTE: htt, Handle封装的value
 
   // If the cache contains entry for key, erase it.  Note that the
   // underlying entry will be kept around until all existing handles
   // to it have been released.
-  virtual void Erase(const Slice& key) = 0;
+  virtual void Erase(const Slice& key) = 0; // NOTE: htt, 清除一个cache中的key,但是直到所有包含key的handle被release, <key,value>才会被清除
 
   // Return a new numeric id.  May be used by multiple clients who are
   // sharing the same cache to partition the key space.  Typically the

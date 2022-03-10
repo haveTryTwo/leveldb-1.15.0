@@ -72,17 +72,17 @@ class Iterator {
   //
   // Note that unlike all of the preceding methods, this method is
   // not abstract and therefore clients should not override it.
-  typedef void (*CleanupFunction)(void* arg1, void* arg2);
-  void RegisterCleanup(CleanupFunction function, void* arg1, void* arg2);
+  typedef void (*CleanupFunction)(void* arg1, void* arg2); // NOTE: htt, CleanupFunction 函数指针
+  void RegisterCleanup(CleanupFunction function, void* arg1, void* arg2); // NOTE: htt, 注册CleanupFunction
 
  private:
   struct Cleanup {
-    CleanupFunction function;
-    void* arg1;
-    void* arg2;
-    Cleanup* next;
+    CleanupFunction function; // NOTE: htt, CleanupFunction函数指针
+    void* arg1; // NOTE: htt, 参数1
+    void* arg2; // NOTE: htt, 参数2
+    Cleanup* next; // NOTE: htt, 指向下一个 Cleanup对象
   };
-  Cleanup cleanup_;
+  Cleanup cleanup_; // NOTE: htt, Cleanup列表，其中通过 Cleanup.next 指向下一个 Cleanup
 
   // No copying allowed
   Iterator(const Iterator&);
