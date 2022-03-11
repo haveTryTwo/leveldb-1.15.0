@@ -14,7 +14,7 @@ namespace leveldb {
 Comparator::~Comparator() { }
 
 namespace {
-class BytewiseComparatorImpl : public Comparator {
+class BytewiseComparatorImpl : public Comparator { // NOTE: htt, Bytewise比较器
  public:
   BytewiseComparatorImpl() { }
 

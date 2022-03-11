@@ -279,11 +279,11 @@ static const uint32_t table3_[256] = {
 };
 
 // Used to fetch a naturally-aligned 32-bit word in little endian byte-order
-static inline uint32_t LE_LOAD32(const uint8_t *p) {
+static inline uint32_t LE_LOAD32(const uint8_t *p) { // NOTE: htt, 转换4字节字符串到对应整数,字符串为小端编码
   return DecodeFixed32(reinterpret_cast<const char*>(p));
 }
 
-uint32_t Extend(uint32_t crc, const char* buf, size_t size) {
+uint32_t Extend(uint32_t crc, const char* buf, size_t size) { // NOTE: htt, 计算buf字符串的crc
   const uint8_t *p = reinterpret_cast<const uint8_t *>(buf);
   const uint8_t *e = p + size;
   uint32_t l = crc ^ 0xffffffffu;
@@ -304,23 +304,23 @@ uint32_t Extend(uint32_t crc, const char* buf, size_t size) {
   // Point x at first 4-byte aligned byte in string.  This might be
   // just past the end of the string.
   const uintptr_t pval = reinterpret_cast<uintptr_t>(p);
-  const uint8_t* x = reinterpret_cast<const uint8_t*>(((pval + 3) >> 2) << 2);
-  if (x <= e) {
+  const uint8_t* x = reinterpret_cast<const uint8_t*>(((pval + 3) >> 2) << 2); // NOTE: htt, x=p+24, 即增加24byte
+  if (x <= e) { // NOTE: htt, 前面24Byte采用 STEP1方式
     // Process bytes until finished or p is 4-byte aligned
     while (p != x) {
       STEP1;
     }
   }
   // Process bytes 16 at a time
-  while ((e-p) >= 16) {
+  while ((e-p) >= 16) { // NOTE: htt, 中间每 16Byte 采用 4次 STEP4;
     STEP4; STEP4; STEP4; STEP4;
   }
   // Process bytes 4 at a time
-  while ((e-p) >= 4) {
+  while ((e-p) >= 4) { // NOTE: htt, 末尾每 4Byte 采用 1次 STEP4
     STEP4;
   }
   // Process the last few bytes
-  while (p != e) {
+  while (p != e) { // NOTE: htt, 最后每个字节采用 1次 STEP4
     STEP1;
   }
 #undef STEP4

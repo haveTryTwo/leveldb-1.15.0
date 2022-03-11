@@ -228,13 +228,13 @@ Cache::Handle* LRUCache::Insert(
   MutexLock l(&mutex_); // NOTE: htt, 加锁
 
   LRUHandle* e = reinterpret_cast<LRUHandle*>(
-      malloc(sizeof(LRUHandle)-1 + key.size())); // NOTE: htt, 创建实际长度的LRUHandle
+      malloc(sizeof(LRUHandle)-1 + key.size())); // NOTE: htt, 创建实际长度的LRUHandle,并按key长度调整大小
   e->value = value;
   e->deleter = deleter;
   e->charge = charge;
   e->key_length = key.size();
   e->hash = hash;
-  e->refs = 2;  // One from LRUCache, one for the returned handle
+  e->refs = 2;  // One from LRUCache, one for the returned handle // TODO: htt, 即使容量不足，当前新加入被删除,但因refs不会当时真删
   memcpy(e->key_data, key.data(), key.size()); // NOTE: htt, 复制值
   LRU_Append(e); // NOTE: htt, LRU链中尾部追加
   usage_ += charge;
