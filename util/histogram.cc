@@ -41,7 +41,7 @@ void Histogram::Clear() {
   }
 }
 
-void Histogram::Add(double value) {
+void Histogram::Add(double value) { // NOTE: htt, 添加一个值
   // Linear search is fast enough for our usage in db_bench
   int b = 0;
   while (b < kNumBuckets - 1 && kBucketLimit[b] <= value) {
@@ -50,9 +50,9 @@ void Histogram::Add(double value) {
   buckets_[b] += 1.0;
   if (min_ > value) min_ = value;
   if (max_ < value) max_ = value;
-  num_++;
-  sum_ += value;
-  sum_squares_ += (value * value);
+  num_++; // NOTE: htt, 增加个数
+  sum_ += value; // NOTE: htt, 增加值
+  sum_squares_ += (value * value); // NOTE: htt, 增加方差
 }
 
 void Histogram::Merge(const Histogram& other) {
@@ -67,11 +67,11 @@ void Histogram::Merge(const Histogram& other) {
 }
 
 double Histogram::Median() const {
-  return Percentile(50.0);
+  return Percentile(50.0); // NOTE: htt, p50, 中位数
 }
 
-double Histogram::Percentile(double p) const {
-  double threshold = num_ * (p / 100.0);
+double Histogram::Percentile(double p) const { // NOTE: htt, 获取pN 对应的值的大小
+  double threshold = num_ * (p / 100.0); // NOTE: htt, pN, 百分位对应个数
   double sum = 0;
   for (int b = 0; b < kNumBuckets; b++) {
     sum += buckets_[b];
@@ -91,14 +91,14 @@ double Histogram::Percentile(double p) const {
   return max_;
 }
 
-double Histogram::Average() const {
+double Histogram::Average() const { // NOTE: htt, 平均值
   if (num_ == 0.0) return 0;
   return sum_ / num_;
 }
 
-double Histogram::StandardDeviation() const {
+double Histogram::StandardDeviation() const { // NOTE: htt, 获取标准差
   if (num_ == 0.0) return 0;
-  double variance = (sum_squares_ * num_ - sum_ * sum_) / (num_ * num_);
+  double variance = (sum_squares_ * num_ - sum_ * sum_) / (num_ * num_); // NOTE: htt, 标准差:https://zh.wikipedia.org/wiki/%E6%A8%99%E6%BA%96%E5%B7%AE
   return sqrt(variance);
 }
 
