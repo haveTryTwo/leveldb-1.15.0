@@ -20,7 +20,7 @@ class Snapshot;
 // sequence of key,value pairs.  Each block may be compressed before
 // being stored in a file.  The following enum describes which
 // compression method (if any) is used to compress a block.
-enum CompressionType {
+enum CompressionType { // NOTE: htt, 压缩算法
   // NOTE: do not change the values of existing entries, as these are
   // part of the persistent format on disk.
   kNoCompression     = 0x0,
@@ -38,15 +38,15 @@ struct Options {/*{{{*/
   // REQUIRES: The client must ensure that the comparator supplied
   // here has the same name and orders keys *exactly* the same as the
   // comparator provided to previous open calls on the same DB.
-  const Comparator* comparator;
+  const Comparator* comparator; // NOTE: htt, 比较器
 
   // If true, the database will be created if it is missing.
   // Default: false
-  bool create_if_missing;
+  bool create_if_missing; // NOTE: htt, db不存在则创建，默认为false
 
   // If true, an error is raised if the database already exists.
   // Default: false
-  bool error_if_exists;
+  bool error_if_exists; // NOTE: htt, db存在则出错，默认为false
 
   // If true, the implementation will do aggressive checking of the
   // data it is processing and will stop early if it detects any
@@ -54,7 +54,7 @@ struct Options {/*{{{*/
   // corruption of one DB entry may cause a large number of entries to
   // become unreadable or for the entire DB to become unopenable.
   // Default: false
-  bool paranoid_checks;
+  bool paranoid_checks; // NOTE: htt, db启动前检查, 默认为 false
 
   // Use the specified object to interact with the environment,
   // e.g. to read/write files, schedule background work, etc.
@@ -65,7 +65,7 @@ struct Options {/*{{{*/
   // be written to info_log if it is non-NULL, or to a file stored
   // in the same directory as the DB contents if info_log is NULL.
   // Default: NULL
-  Logger* info_log;
+  Logger* info_log; // NOTE: htt, 打印日志
 
   // -------------------
   // Parameters that affect performance

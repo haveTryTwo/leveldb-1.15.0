@@ -64,7 +64,7 @@ class PosixLogger : public Logger { // NOTE: htt, 将日志信息打印到文件
       if (p < limit) {
         va_list backup_ap;
         va_copy(backup_ap, ap);
-        p += vsnprintf(p, limit - p, format, backup_ap);
+        p += vsnprintf(p, limit - p, format, backup_ap); // NOTE: htt, 打印日志内容
         va_end(backup_ap);
       }
 

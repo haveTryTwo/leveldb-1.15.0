@@ -30,7 +30,7 @@ Status::Status(Code code, const Slice& msg, const Slice& msg2) { // NOTE: htt, �
     result[6 + len1] = ' ';
     memcpy(result + 7 + len1, msg2.data(), len2);
   }
-  state_ = result;
+  state_ = result; // NOTE: htt, state_为new对象
 }
 
 std::string Status::ToString() const { // NOTE: htt, 生成异常状态可读字符串

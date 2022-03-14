@@ -20,7 +20,7 @@
 
 namespace leveldb {
 
-class Iterator {
+class Iterator { // NOTE: htt, 迭代器
  public:
   Iterator();
   virtual ~Iterator();

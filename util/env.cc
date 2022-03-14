@@ -24,11 +24,11 @@ Logger::~Logger() {
 FileLock::~FileLock() {
 }
 
-void Log(Logger* info_log, const char* format, ...) {
+void Log(Logger* info_log, const char* format, ...) { // NOTE: htt, 打印日志
   if (info_log != NULL) {
     va_list ap;
     va_start(ap, format);
-    info_log->Logv(format, ap);
+    info_log->Logv(format, ap); // NOTE: htt, 打印日志
     va_end(ap);
   }
 }
@@ -43,14 +43,14 @@ static Status DoWriteStringToFile(Env* env, const Slice& data,
   }
   s = file->Append(data);
   if (s.ok() && should_sync) {
-    s = file->Sync();
+    s = file->Sync(); // NOTE: htt, 如果刷盘则Sync()
   }
   if (s.ok()) {
-    s = file->Close();
+    s = file->Close(); // NOTE: htt, close()文件会带来刷盘操作?
   }
   delete file;  // Will auto-close if we did not close above
   if (!s.ok()) {
-    env->DeleteFile(fname);
+    env->DeleteFile(fname); // NOTE: htt, 出现失败则删除文件 TODO: htt, 是否考虑文件已有数据等情况
   }
   return s;
 }
@@ -62,10 +62,10 @@ Status WriteStringToFile(Env* env, const Slice& data,
 
 Status WriteStringToFileSync(Env* env, const Slice& data,
                              const std::string& fname) {
-  return DoWriteStringToFile(env, data, fname, true);
+  return DoWriteStringToFile(env, data, fname, true); // NOTE: htt, 待刷盘写
 }
 
-Status ReadFileToString(Env* env, const std::string& fname, std::string* data) {
+Status ReadFileToString(Env* env, const std::string& fname, std::string* data) { // NOTE: htt, 读取文件内容到data中
   data->clear();
   SequentialFile* file;
   Status s = env->NewSequentialFile(fname, &file);
@@ -81,7 +81,7 @@ Status ReadFileToString(Env* env, const std::string& fname, std::string* data) {
       break;
     }
     data->append(fragment.data(), fragment.size());
-    if (fragment.empty()) {
+    if (fragment.empty()) { // NOTE: htt, 读取完成
       break;
     }
   }
