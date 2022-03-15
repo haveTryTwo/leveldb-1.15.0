@@ -9,7 +9,7 @@
 
 namespace leveldb {
 
-Options::Options()
+Options::Options() // NOTE: htt, options默认值
     : comparator(BytewiseComparator()),
       create_if_missing(false),
       error_if_exists(false),

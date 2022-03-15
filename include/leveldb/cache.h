@@ -27,9 +27,9 @@ class Cache;
 
 // Create a new cache with a fixed size capacity.  This implementation
 // of Cache uses a least-recently-used eviction policy.
-extern Cache* NewLRUCache(size_t capacity);
+extern Cache* NewLRUCache(size_t capacity); // NOTE: htt, 获得ShardedLRUCache
 
-class Cache {
+class Cache { // HOTE: htt, 缓存, 包括数据插入,查找,清除等
  public:
   Cache() { }
 
