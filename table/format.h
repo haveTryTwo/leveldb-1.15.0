@@ -19,7 +19,7 @@ struct ReadOptions;
 
 // BlockHandle is a pointer to the extent of a file that stores a data
 // block or a meta block.
-class BlockHandle {
+class BlockHandle { // NOTE: htt, 包括 数据块的索引，包括 offset_和size_
  public:
   BlockHandle();
 
@@ -35,16 +35,16 @@ class BlockHandle {
   Status DecodeFrom(Slice* input);
 
   // Maximum encoding length of a BlockHandle
-  enum { kMaxEncodedLength = 10 + 10 };
+  enum { kMaxEncodedLength = 10 + 10 }; // NOTE: htt, 采用变长编码，则uint64_t对应最大编码长度为10+10
 
  private:
-  uint64_t offset_;
-  uint64_t size_;
+  uint64_t offset_; // NOTE: htt, 偏移
+  uint64_t size_; // NOTE: htt, 长度
 };
 
 // Footer encapsulates the fixed information stored at the tail
 // end of every table file.
-class Footer {
+class Footer { // NOTE: htt, 存储 元信息索引和数据信息索引，以便这两部分数据读取，并添加魔数
  public:
   Footer() { }
 
@@ -71,22 +71,22 @@ class Footer {
   };
 
  private:
-  BlockHandle metaindex_handle_;
-  BlockHandle index_handle_;
+  BlockHandle metaindex_handle_; // NOTE: htt, 元数据索引handle
+  BlockHandle index_handle_; // NOTE: htt, 数据索引handle
 };
 
 // kTableMagicNumber was picked by running
 //    echo http://code.google.com/p/leveldb/ | sha1sum
 // and taking the leading 64 bits.
-static const uint64_t kTableMagicNumber = 0xdb4775248b80fb57ull;
+static const uint64_t kTableMagicNumber = 0xdb4775248b80fb57ull; // NOTE: htt, 魔数
 
 // 1-byte type + 32-bit crc
-static const size_t kBlockTrailerSize = 5;
+static const size_t kBlockTrailerSize = 5; // NOTE: htt, 1byte 压缩类型 + 4byte crc内容
 
-struct BlockContents {
+struct BlockContents { // NOTE: htt, 读取到内存block块内容
   Slice data;           // Actual contents of data
   bool cachable;        // True iff data can be cached
-  bool heap_allocated;  // True iff caller should delete[] data.data()
+  bool heap_allocated;  // True iff caller should delete[] data.data() // NOTE: htt, 是否为单独new char[]空间，而不是复用
 };
 
 // Read the block identified by "handle" from "file".  On failure
@@ -94,13 +94,13 @@ struct BlockContents {
 extern Status ReadBlock(RandomAccessFile* file,
                         const ReadOptions& options,
                         const BlockHandle& handle,
-                        BlockContents* result);
+                        BlockContents* result); // NOTE: htt, 从 BlockHandle索引读取指向 <offset_, size_>数据
 
 // Implementation details follow.  Clients should ignore,
 
 inline BlockHandle::BlockHandle()
     : offset_(~static_cast<uint64_t>(0)),
-      size_(~static_cast<uint64_t>(0)) {
+      size_(~static_cast<uint64_t>(0)) { // NOTE: htt, 构造为0
 }
 
 }  // namespace leveldb
