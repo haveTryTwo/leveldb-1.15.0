@@ -15,7 +15,7 @@
 
 namespace leveldb {
 
-inline uint32_t Block::NumRestarts() const {
+inline uint32_t Block::NumRestarts() const { // NOTE: htt, restart的个数,保存在block最后的四个字节
   assert(size_ >= sizeof(uint32_t));
   return DecodeFixed32(data_ + size_ - sizeof(uint32_t));
 }
@@ -23,7 +23,7 @@ inline uint32_t Block::NumRestarts() const {
 Block::Block(const BlockContents& contents)
     : data_(contents.data.data()),
       size_(contents.data.size()),
-      owned_(contents.heap_allocated) {
+      owned_(contents.heap_allocated) { // NOTE: htt, 构造函数
   if (size_ < sizeof(uint32_t)) {
     size_ = 0;  // Error marker
   } else {
@@ -32,14 +32,14 @@ Block::Block(const BlockContents& contents)
       // The size is too small for NumRestarts()
       size_ = 0;
     } else {
-      restart_offset_ = size_ - (1 + NumRestarts()) * sizeof(uint32_t);
+      restart_offset_ = size_ - (1 + NumRestarts()) * sizeof(uint32_t); // NOTE: htt, 获得restart数组的偏移
     }
   }
 }
 
 Block::~Block() {
   if (owned_) {
-    delete[] data_;
+    delete[] data_; // NOTE: htt, 如果单独创建的内存则释放掉 data_
   }
 }
 
@@ -53,62 +53,62 @@ Block::~Block() {
 static inline const char* DecodeEntry(const char* p, const char* limit,
                                       uint32_t* shared,
                                       uint32_t* non_shared,
-                                      uint32_t* value_length) {
+                                      uint32_t* value_length) { // NOTE: htt, 获取单个条目内容, <key shard len, key no shard len, value len, no shard key, value content>
   if (limit - p < 3) return NULL;
   *shared = reinterpret_cast<const unsigned char*>(p)[0];
   *non_shared = reinterpret_cast<const unsigned char*>(p)[1];
   *value_length = reinterpret_cast<const unsigned char*>(p)[2];
-  if ((*shared | *non_shared | *value_length) < 128) {
+  if ((*shared | *non_shared | *value_length) < 128) { // NOTE: htt, 如果高位为0, 则可以直接返回
     // Fast path: all three values are encoded in one byte each
     p += 3;
-  } else {
-    if ((p = GetVarint32Ptr(p, limit, shared)) == NULL) return NULL;
-    if ((p = GetVarint32Ptr(p, limit, non_shared)) == NULL) return NULL;
-    if ((p = GetVarint32Ptr(p, limit, value_length)) == NULL) return NULL;
+  } else { // NOTE: htt, 高位不为0，则采用变长方式读取uint32数据
+    if ((p = GetVarint32Ptr(p, limit, shared)) == NULL) return NULL; //NOTE: htt, key共享长度
+    if ((p = GetVarint32Ptr(p, limit, non_shared)) == NULL) return NULL; // NOTE: htt, key非共享长度
+    if ((p = GetVarint32Ptr(p, limit, value_length)) == NULL) return NULL; // NOTE: htt, 数据长度
   }
 
-  if (static_cast<uint32_t>(limit - p) < (*non_shared + *value_length)) {
+  if (static_cast<uint32_t>(limit - p) < (*non_shared + *value_length)) { // NOTE: htt, 字符串长度需要 >= key非共享长度+数据长度
     return NULL;
   }
-  return p;
+  return p; // NOTE: htt, key非共享内容的位置
 }
 
-class Block::Iter : public Iterator {
+class Block::Iter : public Iterator { // NOTE: htt, block内部迭代器,实现根据restart[]索引找到record位置,然后递增entry获取下一个record
  private:
   const Comparator* const comparator_;
-  const char* const data_;      // underlying block contents
-  uint32_t const restarts_;     // Offset of restart array (list of fixed32)
-  uint32_t const num_restarts_; // Number of uint32_t entries in restart array
+  const char* const data_;      // underlying block contents // NOTE: htt, block数据块的指针
+  uint32_t const restarts_;     // Offset of restart array (list of fixed32), // NOTE: htt, restart的起始偏移位置
+  uint32_t const num_restarts_; // Number of uint32_t entries in restart array // NOTE: htt, restart的个数
 
   // current_ is offset in data_ of current entry.  >= restarts_ if !Valid
-  uint32_t current_;
-  uint32_t restart_index_;  // Index of restart block in which current_ falls
-  std::string key_;
-  Slice value_;
+  uint32_t current_; // NOTE: htt, 当前record的位置,初始为restarts_对应的位置(即record最大位置)
+  uint32_t restart_index_;  // Index of restart block in which current_ falls // NOTE: htt, restart的索引序号值,初始为num_restarts_
+  std::string key_; // NOTE: htt, record记录的key(即key信息)
+  Slice value_; // NOTE: htt, record记录的内容(即value信息)
   Status status_;
 
-  inline int Compare(const Slice& a, const Slice& b) const {
+  inline int Compare(const Slice& a, const Slice& b) const { // NOTE: htt, 判断<a, b> 值大小
     return comparator_->Compare(a, b);
   }
 
   // Return the offset in data_ just past the end of the current entry.
-  inline uint32_t NextEntryOffset() const {
+  inline uint32_t NextEntryOffset() const { // NOTE: htt, 获取下一个entry的偏移
     return (value_.data() + value_.size()) - data_;
   }
 
-  uint32_t GetRestartPoint(uint32_t index) {
+  uint32_t GetRestartPoint(uint32_t index) { // NOTE: htt, 获取 restart[index]内容,即 record地址偏移
     assert(index < num_restarts_);
-    return DecodeFixed32(data_ + restarts_ + index * sizeof(uint32_t));
+    return DecodeFixed32(data_ + restarts_ + index * sizeof(uint32_t)); // NOTE: htt, 获取restart[index]内容,即record地址偏移
   }
 
-  void SeekToRestartPoint(uint32_t index) {
+  void SeekToRestartPoint(uint32_t index) { // NOTE: htt, 读取restart[index]值，并设置value_为对应record位置,即游标功能
     key_.clear();
-    restart_index_ = index;
+    restart_index_ = index; // NOTE: htt, 设置 restart_index_
     // current_ will be fixed by ParseNextKey();
 
     // ParseNextKey() starts at the end of value_, so set value_ accordingly
-    uint32_t offset = GetRestartPoint(index);
-    value_ = Slice(data_ + offset, 0);
+    uint32_t offset = GetRestartPoint(index); // NOTE: htt, 获得restart[index]内容,即record的地址偏移
+    value_ = Slice(data_ + offset, 0); // NOTE: htt, value_为restart[index], 实为游标,取巧机制,目的是调整restart_index后,获取NextEntryOffset()依旧指向 offset位置
   }
 
  public:
@@ -125,60 +125,60 @@ class Block::Iter : public Iterator {
     assert(num_restarts_ > 0);
   }
 
-  virtual bool Valid() const { return current_ < restarts_; }
+  virtual bool Valid() const { return current_ < restarts_; } // NOTE: htt, current对应record的偏移小于restarts_值
   virtual Status status() const { return status_; }
-  virtual Slice key() const {
+  virtual Slice key() const { // NOTE: htt, 获取key
     assert(Valid());
     return key_;
   }
-  virtual Slice value() const {
+  virtual Slice value() const { // NOTE: htt, 获取value
     assert(Valid());
     return value_;
   }
 
   virtual void Next() {
     assert(Valid());
-    ParseNextKey();
+    ParseNextKey();// NOTE: htt, 获取下一个record的<key, value>
   }
 
-  virtual void Prev() {
+  virtual void Prev() { // NOTE: htt, 获取前一个record，需要遍历一个 restart[i, i+1]之间的数据
     assert(Valid());
 
     // Scan backwards to a restart point before current_
     const uint32_t original = current_;
     while (GetRestartPoint(restart_index_) >= original) {
-      if (restart_index_ == 0) {
+      if (restart_index_ == 0) { // NOTE: htt, 已经到block的头部
         // No more entries
         current_ = restarts_;
         restart_index_ = num_restarts_;
         return;
       }
-      restart_index_--;
+      restart_index_--; // NOTE: htt, 否则递减restart_index_
     }
 
-    SeekToRestartPoint(restart_index_);
+    SeekToRestartPoint(restart_index_); // NOTE: htt, 读取restart[index]值，并设置value_为对应record位置,即游标功能
     do {
       // Loop until end of current entry hits the start of original entry
-    } while (ParseNextKey() && NextEntryOffset() < original);
+    } while (ParseNextKey() && NextEntryOffset() < original); // NOTE: htt, 找到 <key_,value_>为 current_的前一个
   }
 
-  virtual void Seek(const Slice& target) {
+  virtual void Seek(const Slice& target) { // NOTE: htt, 找打target对应的<key,value>，先在restart索引二分查找,在restart[i]内顺序查找
     // Binary search in restart array to find the last restart point
     // with a key < target
     uint32_t left = 0;
     uint32_t right = num_restarts_ - 1;
-    while (left < right) {
+    while (left < right) { // NOTE: htt, 二分查找，找到最接近target的key,并且key <= target的 restart[i]位置
       uint32_t mid = (left + right + 1) / 2;
       uint32_t region_offset = GetRestartPoint(mid);
       uint32_t shared, non_shared, value_length;
       const char* key_ptr = DecodeEntry(data_ + region_offset,
                                         data_ + restarts_,
                                         &shared, &non_shared, &value_length);
-      if (key_ptr == NULL || (shared != 0)) {
+      if (key_ptr == NULL || (shared != 0)) { // NOTE: htt, restart[i]对应位置的record的key共享长度必须为0
         CorruptionError();
         return;
       }
-      Slice mid_key(key_ptr, non_shared);
+      Slice mid_key(key_ptr, non_shared); // NOTE: htt, 得到restart[i]对应位置record的key
       if (Compare(mid_key, target) < 0) {
         // Key at "mid" is smaller than "target".  Therefore all
         // blocks before "mid" are uninteresting.
@@ -191,31 +191,31 @@ class Block::Iter : public Iterator {
     }
 
     // Linear search (within restart block) for first key >= target
-    SeekToRestartPoint(left);
+    SeekToRestartPoint(left); // NOTE: htt, 二分查找，跳转到 <= target位置
     while (true) {
-      if (!ParseNextKey()) {
+      if (!ParseNextKey()) { // NOTE: htt, 顺序遍历,读取下一个<key,value>
         return;
       }
-      if (Compare(key_, target) >= 0) {
+      if (Compare(key_, target) >= 0) { // NOTE: htt, 找到第一个key 等于 target
         return;
       }
     }
   }
 
-  virtual void SeekToFirst() {
-    SeekToRestartPoint(0);
-    ParseNextKey();
+  virtual void SeekToFirst() { // NOTE: htt, 将数据指向block的第一个record
+    SeekToRestartPoint(0); // NOTE: htt, 指向block开始的record
+    ParseNextKey(); // NOTE: htt, 读取第一个record的 <key, value>
   }
 
-  virtual void SeekToLast() {
-    SeekToRestartPoint(num_restarts_ - 1);
-    while (ParseNextKey() && NextEntryOffset() < restarts_) {
+  virtual void SeekToLast() { // NOTE: htt, 顺序递增直到找到最后一个record
+    SeekToRestartPoint(num_restarts_ - 1); // NOTE: htt, 调整至restart[num_restarts_-1]对应record位置,递增record直到最后一个record
+    while (ParseNextKey() && NextEntryOffset() < restarts_) { // NOTE: htt, 顺序递增直到找到最后一个record
       // Keep skipping
     }
   }
 
  private:
-  void CorruptionError() {
+  void CorruptionError() { // NOTE: htt, 异常错误
     current_ = restarts_;
     restart_index_ = num_restarts_;
     status_ = Status::Corruption("bad entry in block");
@@ -223,11 +223,11 @@ class Block::Iter : public Iterator {
     value_.clear();
   }
 
-  bool ParseNextKey() {
-    current_ = NextEntryOffset();
+  bool ParseNextKey() { // NOTE: htt, 获取下一个record的<key, value>
+    current_ = NextEntryOffset(); // NOTE: htt, 获取下一个entry的偏移 
     const char* p = data_ + current_;
-    const char* limit = data_ + restarts_;  // Restarts come right after data
-    if (p >= limit) {
+    const char* limit = data_ + restarts_;  // Restarts come right after data // NOTE: htt, record的最大位置
+    if (p >= limit) { // NOTE: htt, 如果下一个record的偏移到达 restart_位置，则数据读取完毕 
       // No more entries to return.  Mark as invalid.
       current_ = restarts_;
       restart_index_ = num_restarts_;
@@ -237,31 +237,31 @@ class Block::Iter : public Iterator {
     // Decode next entry
     uint32_t shared, non_shared, value_length;
     p = DecodeEntry(p, limit, &shared, &non_shared, &value_length);
-    if (p == NULL || key_.size() < shared) {
+    if (p == NULL || key_.size() < shared) { // NOTE: htt, 需要前一个key有相应的共享长度内容
       CorruptionError();
       return false;
     } else {
-      key_.resize(shared);
-      key_.append(p, non_shared);
-      value_ = Slice(p + non_shared, value_length);
+      key_.resize(shared); // NOTE: htt, 留下 shared 长度
+      key_.append(p, non_shared); // NOTE: htt, 添加非共享的key内容
+      value_ = Slice(p + non_shared, value_length); // NOTE: htt, 获取value的引用
       while (restart_index_ + 1 < num_restarts_ &&
-             GetRestartPoint(restart_index_ + 1) < current_) {
-        ++restart_index_;
+             GetRestartPoint(restart_index_ + 1) < current_) { // NOTE: htt, 当前restart[restart_index_] < current,则增加索引
+        ++restart_index_; // NOTE: htt, 增加restart_index_索引值
       }
       return true;
     }
   }
 };
 
-Iterator* Block::NewIterator(const Comparator* cmp) {
+Iterator* Block::NewIterator(const Comparator* cmp) { // NOTE: htt, 构建block迭代器
   if (size_ < sizeof(uint32_t)) {
     return NewErrorIterator(Status::Corruption("bad block contents"));
   }
   const uint32_t num_restarts = NumRestarts();
   if (num_restarts == 0) {
-    return NewEmptyIterator();
+    return NewEmptyIterator(); // NOTE: htt, 空block对应空iterator
   } else {
-    return new Iter(cmp, data_, restart_offset_, num_restarts);
+    return new Iter(cmp, data_, restart_offset_, num_restarts); // NOTE: htt, 构建block内部读取迭代器
   }
 }
 
