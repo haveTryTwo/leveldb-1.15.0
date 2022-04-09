@@ -11,7 +11,7 @@ namespace leveldb {
 // caches the valid() and key() results for an underlying iterator.
 // This can help avoid virtual function calls and also gives better
 // cache locality.
-class IteratorWrapper {
+class IteratorWrapper { // NOTE:htt, 缓存iterator的key()和valid()
  public:
   IteratorWrapper(): iter_(NULL), valid_(false) { }
   explicit IteratorWrapper(Iterator* iter): iter_(NULL) {
@@ -22,8 +22,8 @@ class IteratorWrapper {
 
   // Takes ownership of "iter" and will delete it when destroyed, or
   // when Set() is invoked again.
-  void Set(Iterator* iter) {
-    delete iter_;
+  void Set(Iterator* iter) { // NOTE:htt, 设置iter,并根据需要更新key
+    delete iter_; // NOTE:htt, 为NULL也可以delete
     iter_ = iter;
     if (iter_ == NULL) {
       valid_ = false;
@@ -35,7 +35,7 @@ class IteratorWrapper {
 
   // Iterator interface methods
   bool Valid() const        { return valid_; }
-  Slice key() const         { assert(Valid()); return key_; }
+  Slice key() const         { assert(Valid()); return key_; } // NOTE:htt, 直接返回缓存的key
   Slice value() const       { assert(Valid()); return iter_->value(); }
   // Methods below require iter() != NULL
   Status status() const     { assert(iter_); return iter_->status(); }
@@ -46,16 +46,16 @@ class IteratorWrapper {
   void SeekToLast()         { assert(iter_); iter_->SeekToLast();  Update(); }
 
  private:
-  void Update() {
+  void Update() { // NOTE:htt, 更新valid 和 key
     valid_ = iter_->Valid();
     if (valid_) {
-      key_ = iter_->key();
+      key_ = iter_->key(); // NOTE:htt, 有效时更新key
     }
   }
 
   Iterator* iter_;
-  bool valid_;
-  Slice key_;
+  bool valid_; // NOTE:htt, iter_ 和 key_ 是否有效
+  Slice key_; // NOTE:htt, 缓存的key
 };
 
 }  // namespace leveldb
