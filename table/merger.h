@@ -19,7 +19,7 @@ class Iterator;
 //
 // REQUIRES: n >= 0
 extern Iterator* NewMergingIterator(
-    const Comparator* comparator, Iterator** children, int n);
+    const Comparator* comparator, Iterator** children, int n); // NOTE:htt, 构建多个iterator的合并处理
 
 }  // namespace leveldb
 
