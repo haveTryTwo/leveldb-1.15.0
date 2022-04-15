@@ -162,7 +162,7 @@ class Block::Iter : public Iterator { // NOTE: htt, block内部迭代器,实现�
     } while (ParseNextKey() && NextEntryOffset() < original); // NOTE: htt, 找到 <key_,value_>为 current_的前一个
   }
 
-  virtual void Seek(const Slice& target) { // NOTE: htt, 找打target对应的<key,value>，先在restart索引二分查找,在restart[i]内顺序查找
+  virtual void Seek(const Slice& target) { // NOTE: htt, 找target对应的<key,value>，先在restart索引二分查找,在restart[i]内顺序查找
     // Binary search in restart array to find the last restart point
     // with a key < target
     uint32_t left = 0;
@@ -224,7 +224,7 @@ class Block::Iter : public Iterator { // NOTE: htt, block内部迭代器,实现�
   }
 
   bool ParseNextKey() { // NOTE: htt, 获取下一个record的<key, value>
-    current_ = NextEntryOffset(); // NOTE: htt, 获取下一个entry的偏移 
+    current_ = NextEntryOffset(); // NOTE: htt, 获取下一个entry的偏移,调整current_位置
     const char* p = data_ + current_;
     const char* limit = data_ + restarts_;  // Restarts come right after data // NOTE: htt, record的最大位置
     if (p >= limit) { // NOTE: htt, 如果下一个record的偏移到达 restart_位置，则数据读取完毕 
