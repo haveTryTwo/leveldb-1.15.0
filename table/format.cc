@@ -107,7 +107,7 @@ Status ReadBlock(RandomAccessFile* file,
         delete[] buf;
         result->data = Slice(data, n); // NOTE: htt, 从其他内存获取数据，比如mmap地址
         result->heap_allocated = false;
-        result->cachable = false;  // Do not double-cache
+        result->cachable = false;  // Do not double-cache // NOTE:htt, 如果是mmap等缓存,则不用对Block进行再次缓存
       } else {
         result->data = Slice(buf, n); // NOTE: htt, 使用 new buf[]空间
         result->heap_allocated = true;

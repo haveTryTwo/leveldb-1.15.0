@@ -26,7 +26,7 @@ class FilterPolicy;
 //
 // The sequence of calls to FilterBlockBuilder must match the regexp:
 //      (StartBlock AddKey*)* Finish
-class FilterBlockBuilder {
+class FilterBlockBuilder { // NOTE:htt,构建block的bloomFilter;针对block先添加key列表,然后生成bloomFilter放入result中
  public:
   explicit FilterBlockBuilder(const FilterPolicy*);
 
@@ -37,19 +37,19 @@ class FilterBlockBuilder {
  private:
   void GenerateFilter();
 
-  const FilterPolicy* policy_;
-  std::string keys_;              // Flattened key contents
-  std::vector<size_t> start_;     // Starting index in keys_ of each key
-  std::string result_;            // Filter data computed so far
-  std::vector<Slice> tmp_keys_;   // policy_->CreateFilter() argument
-  std::vector<uint32_t> filter_offsets_;
+  const FilterPolicy* policy_; // NOTE:htt, 过滤策略
+  std::string keys_;              // Flattened key contents // NOTE:htt, 包含key的列表
+  std::vector<size_t> start_;     // Starting index in keys_ of each key // NOTE:htt, key在keys中的偏移
+  std::string result_;            // Filter data computed so far //NOTE:htt,保存bloomFilter结果列表,按block分成多个偏移
+  std::vector<Slice> tmp_keys_;   // policy_->CreateFilter() argument // NOTE:htt, 临时保存key的列表
+  std::vector<uint32_t> filter_offsets_; // NOTE: htt,保存result中按block分成的多个块的开始偏移
 
   // No copying allowed
   FilterBlockBuilder(const FilterBlockBuilder&);
   void operator=(const FilterBlockBuilder&);
 };
 
-class FilterBlockReader {
+class FilterBlockReader { // NOTE:htt, 从已构建的bloomFilter解析列表,然后对相应的key进行bloomFilter查询
  public:
  // REQUIRES: "contents" and *policy must stay live while *this is live.
   FilterBlockReader(const FilterPolicy* policy, const Slice& contents);
@@ -57,10 +57,10 @@ class FilterBlockReader {
 
  private:
   const FilterPolicy* policy_;
-  const char* data_;    // Pointer to filter data (at block-start)
-  const char* offset_;  // Pointer to beginning of offset array (at block-end)
-  size_t num_;          // Number of entries in offset array
-  size_t base_lg_;      // Encoding parameter (see kFilterBaseLg in .cc file)
+  const char* data_;    // Pointer to filter data (at block-start) // NOTE:htt, block对应bloomFilter的起始位置
+  const char* offset_;  // Pointer to beginning of offset array (at block-end) // NOTE:htt,首个block对应bloomFilter偏移在data偏移
+  size_t num_;          // Number of entries in offset array // NOTE:htt, block对应bloomFilter的偏移列表个数
+  size_t base_lg_;      // Encoding parameter (see kFilterBaseLg in .cc file) // NOTE:htt,bloomFilter对应分块大小,默认2k
 };
 
 }

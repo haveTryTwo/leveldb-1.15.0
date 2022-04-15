@@ -100,7 +100,7 @@ extern Status ReadBlock(RandomAccessFile* file,
 
 inline BlockHandle::BlockHandle()
     : offset_(~static_cast<uint64_t>(0)),
-      size_(~static_cast<uint64_t>(0)) { // NOTE: htt, 构造为0
+      size_(~static_cast<uint64_t>(0)) { // NOTE: htt, 构造为2^64-1
 }
 
 }  // namespace leveldb
