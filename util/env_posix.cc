@@ -82,7 +82,7 @@ class PosixRandomAccessFile: public RandomAccessFile { // NOTE: htt, 随机读�
   virtual Status Read(uint64_t offset, size_t n, Slice* result,
                       char* scratch) const {
     Status s;
-    ssize_t r = pread(fd_, scratch, n, static_cast<off_t>(offset));
+    ssize_t r = pread(fd_, scratch, n, static_cast<off_t>(offset)); // NOTE:htt, 从offset偏移位置开始读取
     *result = Slice(scratch, (r < 0) ? 0 : r);
     if (r < 0) {
       // An error: return a non-ok status

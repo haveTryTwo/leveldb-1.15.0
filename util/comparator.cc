@@ -28,7 +28,7 @@ class BytewiseComparatorImpl : public Comparator { // NOTE: htt, Bytewise比较�
 
   virtual void FindShortestSeparator(
       std::string* start,
-      const Slice& limit) const { // NOTE: htt, 找到 比start大，比limit小的最小字符串，如 abcg 和 abmn，则找到字符串为 abd
+      const Slice& limit) const { // NOTE:htt,找到 比start大，比limit小的最小字符串，如 abcg 和 abmn，则找到字符串为 abd
     // Find length of common prefix
     size_t min_length = std::min(start->size(), limit.size());
     size_t diff_index = 0;
@@ -44,7 +44,7 @@ class BytewiseComparatorImpl : public Comparator { // NOTE: htt, Bytewise比较�
       if (diff_byte < static_cast<uint8_t>(0xff) &&
           diff_byte + 1 < static_cast<uint8_t>(limit[diff_index])) {
         (*start)[diff_index]++; // NOTE: htt, 找到不一致位置，并将内容+1
-        start->resize(diff_index + 1);
+        start->resize(diff_index + 1); // NOTE:htt, 重新设置start长度
         assert(Compare(*start, limit) < 0);
       }
     }

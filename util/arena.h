@@ -12,7 +12,7 @@
 
 namespace leveldb {
 
-class Arena { // NOTE: htt, 提供内存分配机制，如果小内存则先缓存一部分，后续申请直接从缓存取
+class Arena { // NOTE:htt, 提供内存分配机制,如果小内存则先缓存一部分,后续申请直接从缓存取
  public:
   Arena();
   ~Arena();

@@ -44,7 +44,7 @@ void PutFixed64(std::string* dst, uint64_t value) {
   dst->append(buf, sizeof(buf)); // NOTE: htt, 将value转变的字符串放入到string中
 }
 
-char* EncodeVarint32(char* dst, uint32_t v) {
+char* EncodeVarint32(char* dst, uint32_t v) { // NOTE:htt, 构建uint32_t的变长字符串
   // Operate on characters as unsigneds
   unsigned char* ptr = reinterpret_cast<unsigned char*>(dst);
   static const int B = 128;
@@ -95,7 +95,7 @@ void PutVarint64(std::string* dst, uint64_t v) {
   dst->append(buf, ptr - buf); // NOTE: htt, 将v转变的可变字符串放入到string
 }
 
-void PutLengthPrefixedSlice(std::string* dst, const Slice& value) { // NOTE: htt，保存长度+字符串类型，其中长度采用可变整数
+void PutLengthPrefixedSlice(std::string* dst, const Slice& value) { // NOTE:htt,保存长度+字符串,其中长度采用可变整数
   PutVarint32(dst, value.size()); // NOTE: htt, 先记录长度，按可变字符存储
   dst->append(value.data(), value.size()); // NOTE: htt, 添加字符串内存
 }

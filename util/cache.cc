@@ -23,12 +23,12 @@ namespace {
 // An entry is a variable length heap-allocated structure.  Entries
 // are kept in a circular doubly linked list ordered by access time.
 struct LRUHandle { // NOTE: htt, Handle内部一个是吸纳LRUHandle
-  void* value;
-  void (*deleter)(const Slice&, void* value);
+  void* value; // NOTE:htt, Block对象
+  void (*deleter)(const Slice&, void* value); // NOTE:htt, <key, value>释放
   LRUHandle* next_hash; // NOTE: htt, hashTable中 hash后处于同一个bucket中的下一个Handle的指针
   LRUHandle* next;
   LRUHandle* prev;
-  size_t charge;      // TODO(opt): Only allow uint32_t? // NOTE: htt, 消耗空间
+  size_t charge;      // TODO(opt): Only allow uint32_t? // NOTE: htt, Block对象 消耗空间
   size_t key_length; // NOTE: htt, key的长度
   uint32_t refs; // NOTE: htt, 当前对象被引用的次数
   uint32_t hash;      // Hash of key(); used for fast sharding and comparisons // NOTE: htt, 当前key的hash值
@@ -132,7 +132,7 @@ class HandleTable { // NOTE: htt, Handle的HashTable,支持查找/插入/删除 
 };/*}}}*/
 
 // A single shard of sharded cache.
-class LRUCache {/*{{{*/
+class LRUCache {// NOTE:htt, 单分片LRUCache, 采用HashTable快速查找key,并支持LRU机制 /*{{{*/
  public:
   LRUCache();
   ~LRUCache();
@@ -271,7 +271,7 @@ class ShardedLRUCache : public Cache { // NOTE: htt, 带分片的LRUCache, 即�
  private:
   LRUCache shard_[kNumShards]; // NOTE: htt, 16个 LRUCache对象, 即两次hash减少碰撞
   port::Mutex id_mutex_; // NOTE: htt, id锁
-  uint64_t last_id_;
+  uint64_t last_id_; // NOTE:htt, 当前分片LRUCache的最后的id
 
   static inline uint32_t HashSlice(const Slice& s) {
     return Hash(s.data(), s.size(), 0); // NOTE: htt, 返回hash值
@@ -284,7 +284,7 @@ class ShardedLRUCache : public Cache { // NOTE: htt, 带分片的LRUCache, 即�
  public:
   explicit ShardedLRUCache(size_t capacity)
       : last_id_(0) {
-    const size_t per_shard = (capacity + (kNumShards - 1)) / kNumShards; // NOTE: htt, 4的整数倍
+    const size_t per_shard = (capacity + (kNumShards - 1)) / kNumShards; // NOTE: htt, 2^4的整数倍
     for (int s = 0; s < kNumShards; s++) {
       shard_[s].SetCapacity(per_shard); // NOTE: htt, 设置每个shard的capacity容量
     }

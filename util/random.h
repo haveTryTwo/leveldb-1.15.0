@@ -12,7 +12,7 @@ namespace leveldb {
 // A very simple random number generator.  Not especially good at
 // generating truly random bits, but good enough for our needs in this
 // package.
-class Random { // NOTE: htt, 随机值生成器, 注意顶多 2^32 次会轮回(算法导致)
+classRandom { // NOTE: htt, 随机值生成器, 注意顶多 2^31 次会轮回(算法导致)
  private:
   uint32_t seed_; // NOTE: htt, 随机值(和随机种子复用,初始化时设置), 避免为0或2^31-1
  public:
@@ -22,7 +22,7 @@ class Random { // NOTE: htt, 随机值生成器, 注意顶多 2^32 次会轮回(
       seed_ = 1;
     }
   }
-  uint32_t Next() { // NOTE: htt, 取下一个随机值, 当seed_首次确定后，后续随机值也随机确定，并且最大 2^32 一次会轮回
+  uint32_t Next() { // NOTE: htt, 取下一个随机值, 当seed_首次确定后，后续随机值也随机确定，并且最大 2^31 一次会轮回
     static const uint32_t M = 2147483647L;   // 2^31-1
     static const uint64_t A = 16807;  // bits 14, 8, 7, 5, 2, 1, 0
     // We are computing
@@ -31,7 +31,7 @@ class Random { // NOTE: htt, 随机值生成器, 注意顶多 2^32 次会轮回(
     // seed_ must not be zero or M, or else all subsequent computed values
     // will be zero or M respectively.  For all other values, seed_ will end
     // up cycling through every number in [1,M-1]
-    uint64_t product = seed_ * A; // NOTE: htt, 避免为0或2^31-1,以免后续值也是0或2^31-1
+    uint64_t product = seed_ * A; // NOTE: htt, 避免为0或2^31-1,以免后续值也是0或2^31-1; seed值相关则product相同,后续随机值也相同
 
     // Compute (product % M) using the fact that ((x << 31) % M) == x.
     seed_ = static_cast<uint32_t>((product >> 31) + (product & M));
