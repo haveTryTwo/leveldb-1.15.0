@@ -17,11 +17,11 @@ namespace leveldb {
 
 class Env;
 
-enum FileType {
-  kLogFile,
+enum FileType { // NOTE:htt, leveldb日志文件类型
+  kLogFile, // NOTE:htt, WAL日志文件
   kDBLockFile,
   kTableFile,
-  kDescriptorFile,
+  kDescriptorFile, // NOTE:htt, MANIFEST-* 文件
   kCurrentFile,
   kTempFile,
   kInfoLogFile  // Either the current one, or an old one
