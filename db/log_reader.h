@@ -17,7 +17,7 @@ class SequentialFile;
 
 namespace log {
 
-class Reader {
+class Reader { // NOTE:htt, 读取WAL中完整的日志信息, Full或<First,Mid,...,Last>组合
  public:
   // Interface for reporting errors.
   class Reporter {
@@ -58,30 +58,30 @@ class Reader {
   uint64_t LastRecordOffset();
 
  private:
-  SequentialFile* const file_;
+  SequentialFile* const file_; // NOTE:htt, 顺序读文件
   Reporter* const reporter_;
-  bool const checksum_;
-  char* const backing_store_;
-  Slice buffer_;
-  bool eof_;   // Last Read() indicated EOF by returning < kBlockSize
+  bool const checksum_; // NOTE:htt, 是否校验WAL日志内容的crc
+  char* const backing_store_; // NOTE:htt, 缓存WAL日志读取的块
+  Slice buffer_; // NOTE:htt, 按块读取buffer
+  bool eof_;   // Last Read() indicated EOF by returning < kBlockSize // NOTE:htt, 是否读取完毕
 
   // Offset of the last record returned by ReadRecord.
-  uint64_t last_record_offset_;
+  uint64_t last_record_offset_; // NOTE:htt, 最近一条读取日志在WAL中偏移
   // Offset of the first location past the end of buffer_.
-  uint64_t end_of_buffer_offset_;
+  uint64_t end_of_buffer_offset_; // NOTE:htt, 当前buffer在整个WAL文件中的位置偏移
 
   // Offset at which to start looking for the first record to return
-  uint64_t const initial_offset_;
+  uint64_t const initial_offset_; // NOTE:htt, WAL日志初始化读取位置
 
   // Extend record types with the following special values
   enum {
-    kEof = kMaxRecordType + 1,
+    kEof = kMaxRecordType + 1, // NOTE:htt, WAL读取完毕
     // Returned whenever we find an invalid physical record.
     // Currently there are three situations in which this happens:
     // * The record has an invalid CRC (ReadPhysicalRecord reports a drop)
     // * The record is a 0-length record (No drop is reported)
     // * The record is below constructor's initial_offset (No drop is reported)
-    kBadRecord = kMaxRecordType + 2
+    kBadRecord = kMaxRecordType + 2 // NOTE:htt, WAL记录中记录出现异常
   };
 
   // Skips all blocks that are completely before "initial_offset_".

@@ -19,12 +19,12 @@ Status BuildTable(const std::string& dbname,
                   const Options& options,
                   TableCache* table_cache,
                   Iterator* iter,
-                  FileMetaData* meta) {
+                  FileMetaData* meta) { // NOTE:htt, 将iter中的数据内容写入到sst文件中(dbname为前缀),生成元信息到meta
   Status s;
   meta->file_size = 0;
   iter->SeekToFirst();
 
-  std::string fname = TableFileName(dbname, meta->number);
+  std::string fname = TableFileName(dbname, meta->number); // NOTE:htt, 表文件名, ${name}/${number}.ldb
   if (iter->Valid()) {
     WritableFile* file;
     s = env->NewWritableFile(fname, &file);
@@ -32,19 +32,19 @@ Status BuildTable(const std::string& dbname,
       return s;
     }
 
-    TableBuilder* builder = new TableBuilder(options, file);
+    TableBuilder* builder = new TableBuilder(options, file);// NOTE:htt, 完成整个sstable写入,包括{data block列表, meta block, meta index block, index block, footer} 写入
     meta->smallest.DecodeFrom(iter->key());
     for (; iter->Valid(); iter->Next()) {
       Slice key = iter->key();
       meta->largest.DecodeFrom(key);
-      builder->Add(key, iter->value());
+      builder->Add(key, iter->value()); // NOTE:htt, 将迭代器中的内容写入到 sst 文件中
     }
 
     // Finish and check for builder errors
     if (s.ok()) {
-      s = builder->Finish();
+      s = builder->Finish();// NOTE:htt, 完成整个sstable写入, 包括{data block列表, meta block, meta index block, index block, footer} 写入
       if (s.ok()) {
-        meta->file_size = builder->FileSize();
+        meta->file_size = builder->FileSize(); // NOTE:htt, 设置文件大小
         assert(meta->file_size > 0);
       }
     } else {
@@ -54,7 +54,7 @@ Status BuildTable(const std::string& dbname,
 
     // Finish and check for file errors
     if (s.ok()) {
-      s = file->Sync();
+      s = file->Sync(); // NOTE: htt, 将目录entry信息刷盘，同时将用户态数据刷入内核，内核态数据刷入磁盘
     }
     if (s.ok()) {
       s = file->Close();
@@ -80,7 +80,7 @@ Status BuildTable(const std::string& dbname,
   if (s.ok() && meta->file_size > 0) {
     // Keep it
   } else {
-    env->DeleteFile(fname);
+    env->DeleteFile(fname); // NOTE:htt, 异常时删除文件
   }
   return s;
 }

@@ -11,7 +11,7 @@
 namespace leveldb {
 namespace log {
 
-enum RecordType {
+enum RecordType { // NOTE:htt, WAL日志文件中记录的类型
   // Zero is reserved for preallocated files
   kZeroType = 0,
 
@@ -22,12 +22,12 @@ enum RecordType {
   kMiddleType = 3,
   kLastType = 4
 };
-static const int kMaxRecordType = kLastType;
+static const int kMaxRecordType = kLastType; // NOTE:htt, 最大记录类型
 
-static const int kBlockSize = 32768;
+static const int kBlockSize = 32768; // NOTE:htt, WAL日志分块大小32k
 
 // Header is checksum (4 bytes), type (1 byte), length (2 bytes).
-static const int kHeaderSize = 4 + 1 + 2;
+static const int kHeaderSize = 4 + 1 + 2; // NOTE:htt, WAL日志中记录的头长度${CheckSum}${RecordLen}${Type}
 
 }  // namespace log
 }  // namespace leveldb
