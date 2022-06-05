@@ -16,7 +16,10 @@ class WritableFile;
 
 namespace log {
 
-class Writer {
+// WAL日志按32K块严格划分Block
+// 单条记录可能会跨多个Block,在每个Block会存储部分记录,并且会标记当前部分的类型,即RecordType
+// 单个记录在单个block格式: ${crc}${n}${t}${str}, 其中n为${str}长度,t为WAL中记录类型,str为写入记录,crc为${t}${str}的crc32
+class Writer { // NOTE:htt, 将记录写入WAL日志中,如果记录大于块长度,则拆分多个部分写入
  public:
   // Create a writer that will append data to "*dest".
   // "*dest" must be initially empty.
@@ -27,13 +30,13 @@ class Writer {
   Status AddRecord(const Slice& slice);
 
  private:
-  WritableFile* dest_;
-  int block_offset_;       // Current offset in block
+  WritableFile* dest_; // NOTE:htt, WAL日志文件实际的写入文件描述符
+  int block_offset_;       // Current offset in block // NOTE:htt, block块空闲空间偏移
 
   // crc32c values for all supported record types.  These are
   // pre-computed to reduce the overhead of computing the crc of the
   // record type stored in the header.
-  uint32_t type_crc_[kMaxRecordType + 1];
+  uint32_t type_crc_[kMaxRecordType + 1]; // NOTE:htt, 将WAL中记录每种类型都生成crc32值
 
   Status EmitPhysicalRecord(RecordType type, const char* ptr, size_t length);
 
