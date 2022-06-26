@@ -35,7 +35,7 @@ void Log(Logger* info_log, const char* format, ...) { // NOTE: htt, 打印日志
 
 static Status DoWriteStringToFile(Env* env, const Slice& data,
                                   const std::string& fname,
-                                  bool should_sync) {
+                                  bool should_sync) { // NOTE:htt, 将data写入 fname新文件中,并根据sync来判断是否同步数据
   WritableFile* file;
   Status s = env->NewWritableFile(fname, &file);
   if (!s.ok()) {

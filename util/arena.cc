@@ -25,7 +25,7 @@ char* Arena::AllocateFallback(size_t bytes) { // NOTE: htt, 重新申请内存�
   if (bytes > kBlockSize / 4) { // NOTE: htt, 大于 kBlockSize/4, 则直接分配新的内存
     // Object is more than a quarter of our block size.  Allocate it separately
     // to avoid wasting too much space in leftover bytes.
-    char* result = AllocateNewBlock(bytes);
+    char* result = AllocateNewBlock(bytes); // NOTE:htt,注意没有调整alloc_ptr_和alloc_bytes_remaining_,即原有剩余空间会继续使用
     return result;
   }
 

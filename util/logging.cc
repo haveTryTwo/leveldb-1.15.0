@@ -54,7 +54,7 @@ bool ConsumeChar(Slice* in, char c) { // NOTE: htt, 如果in字符串以c开始�
   }
 }
 
-bool ConsumeDecimalNumber(Slice* in, uint64_t* val) { // NOTE: htt, 将可读整数放入大val，并移动字符串中相应游标跳过整数
+bool ConsumeDecimalNumber(Slice* in, uint64_t* val) { // NOTE:htt, 将可读整数放入到val，并移动字符串中相应游标跳过整数
   uint64_t v = 0;
   int digits = 0;
   while (!in->empty()) {

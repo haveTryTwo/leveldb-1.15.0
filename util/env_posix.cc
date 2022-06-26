@@ -534,7 +534,7 @@ void PosixEnv::Schedule(void (*function)(void*), void* arg) { // NOTE: htt, 启�
 
   // Start background thread if necessary
   if (!started_bgthread_) {
-    started_bgthread_ = true; // NOTE: htt, 启动一次执行后台线程
+    started_bgthread_ = true; // NOTE: htt, 启动一个后台线程
     PthreadCall(
         "create thread",
         pthread_create(&bgthread_, NULL,  &PosixEnv::BGThreadWrapper, this)); // NOTE: htt, 启动线程

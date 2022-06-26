@@ -318,7 +318,7 @@ class ShardedLRUCache : public Cache { // NOTE: htt, 带分片的LRUCache, 即�
 
 }  // end anonymous namespace
 
-Cache* NewLRUCache(size_t capacity) { // NOTE: htt, 获得ShardedLRUCache
+Cache* NewLRUCache(size_t capacity) { // NOTE: htt, 生成ShardedLRUCache
   return new ShardedLRUCache(capacity);
 }
 

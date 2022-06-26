@@ -12,7 +12,7 @@ namespace leveldb {
 // A very simple random number generator.  Not especially good at
 // generating truly random bits, but good enough for our needs in this
 // package.
-classRandom { // NOTE: htt, 随机值生成器, 注意顶多 2^31 次会轮回(算法导致)
+class Random { // NOTE: htt, 随机值生成器, 注意顶多 2^31 次会轮回(算法导致)
  private:
   uint32_t seed_; // NOTE: htt, 随机值(和随机种子复用,初始化时设置), 避免为0或2^31-1
  public:
