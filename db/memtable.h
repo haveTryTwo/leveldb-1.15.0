@@ -17,20 +17,20 @@ class InternalKeyComparator;
 class Mutex;
 class MemTableIterator;
 
-class MemTable {
+class MemTable { // NOTE:htt, 内存table,采用跳表实现
  public:
   // MemTables are reference counted.  The initial reference count
   // is zero and the caller must call Ref() at least once.
   explicit MemTable(const InternalKeyComparator& comparator);
 
   // Increase reference count.
-  void Ref() { ++refs_; }
+  void Ref() { ++refs_; } // NOTE:htt, 增加引用
 
   // Drop reference count.  Delete if no more references exist.
-  void Unref() {
+  void Unref() { // NOTE:htt, 减少引用
     --refs_;
     assert(refs_ >= 0);
-    if (refs_ <= 0) {
+    if (refs_ <= 0) { // NOTE:htt, 引用为0则删除
       delete this;
     }
   }
@@ -66,20 +66,20 @@ class MemTable {
  private:
   ~MemTable();  // Private since only Unref() should be used to delete it
 
-  struct KeyComparator {
-    const InternalKeyComparator comparator;
+  struct KeyComparator { // NOTE:htt, key大小比对
+    const InternalKeyComparator comparator; // NOTE:htt, 比较器
     explicit KeyComparator(const InternalKeyComparator& c) : comparator(c) { }
     int operator()(const char* a, const char* b) const;
   };
   friend class MemTableIterator;
   friend class MemTableBackwardIterator;
 
-  typedef SkipList<const char*, KeyComparator> Table;
+  typedef SkipList<const char*, KeyComparator> Table; // NOTE:htt, 跳表
 
-  KeyComparator comparator_;
-  int refs_;
-  Arena arena_;
-  Table table_;
+  KeyComparator comparator_; // NOTE:htt, key比较器
+  int refs_; // NOTE:htt, 引用计数
+  Arena arena_;// NOTE:htt, 提供内存分配机制,如果小内存则先缓存一部分,后续申请直接从缓存取
+  Table table_; // NOTE:htt, 跳表
 
   // No copying allowed
   MemTable(const MemTable&);
