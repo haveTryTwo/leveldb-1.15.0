@@ -33,10 +33,10 @@ Status BuildTable(const std::string& dbname,
     }
 
     TableBuilder* builder = new TableBuilder(options, file);// NOTE:htt, 完成整个sstable写入,包括{data block列表, meta block, meta index block, index block, footer} 写入
-    meta->smallest.DecodeFrom(iter->key());
+    meta->smallest.DecodeFrom(iter->key()); // NOTE:htt, 设置最小的key
     for (; iter->Valid(); iter->Next()) {
       Slice key = iter->key();
-      meta->largest.DecodeFrom(key);
+      meta->largest.DecodeFrom(key); // NOTE:htt, 设置最大的key
       builder->Add(key, iter->value()); // NOTE:htt, 将迭代器中的内容写入到 sst 文件中
     }
 
@@ -48,7 +48,7 @@ Status BuildTable(const std::string& dbname,
         assert(meta->file_size > 0);
       }
     } else {
-      builder->Abandon();
+      builder->Abandon();// NOTE:htt, 废弃当前sstab的写入
     }
     delete builder;
 

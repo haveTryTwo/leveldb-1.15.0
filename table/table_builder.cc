@@ -27,7 +27,7 @@ struct TableBuilder::Rep { // NOTE:htt, tableBuilder构建sstable需要的变量
   BlockBuilder index_block; // NOTE:htt, index索引块构建
   std::string last_key; // NOTE:htt, 当前sstable写入的最后key
   int64_t num_entries; // NOTE:htt, 当前sstable的<key,value>个数
-  bool closed;          // Either Finish() or Abandon() has been called.
+  bool closed;          // Either Finish() or Abandon() has been called. // NOTE:htt, 当前是否close
   FilterBlockBuilder* filter_block; // NOTE:htt, 构建过滤器,如BloomFilter过滤器
 
   // We do not emit the index entry for a block until we have seen the
@@ -103,7 +103,7 @@ void TableBuilder::Add(const Slice& key, const Slice& value) { // NOTE:htt, 写�
     std::string handle_encoding;
     r->pending_handle.EncodeTo(&handle_encoding);
     r->index_block.Add(r->last_key, Slice(handle_encoding)); // NOTE:htt, index block记录data block最后的<last_key, <offset,size>>
-    r->pending_index_entry = false; // NOTE:htt, 充值pending index entry
+    r->pending_index_entry = false; // NOTE:htt, 重置pending index entry
   }
 
   if (r->filter_block != NULL) {

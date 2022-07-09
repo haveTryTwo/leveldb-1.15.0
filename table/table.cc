@@ -252,7 +252,7 @@ uint64_t Table::ApproximateOffsetOf(const Slice& key) const { // NOTE:htt, 找�
   uint64_t result;
   if (index_iter->Valid()) {
     BlockHandle handle;
-    Slice input = index_iter->value();
+    Slice input = index_iter->value(); // NOTE:htt, index block中保存的为{last_key, {offset,size}}
     Status s = handle.DecodeFrom(&input);
     if (s.ok()) {
       result = handle.offset(); // NOTE:htt, data block在sst文件中偏移
