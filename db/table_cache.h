@@ -18,7 +18,7 @@ namespace leveldb {
 
 class Env;
 
-class TableCache {
+class TableCache { // NOTE:htt, 读取file_number对应文件, 并缓存{ sst_file_numbe, {file, sst_talbe} }
  public:
   TableCache(const std::string& dbname, const Options* options, int entries);
   ~TableCache();
@@ -48,10 +48,10 @@ class TableCache {
   void Evict(uint64_t file_number);
 
  private:
-  Env* const env_;
-  const std::string dbname_;
+  Env* const env_; // NOTE:htt, 环境
+  const std::string dbname_; // NOTE:htt, db名称
   const Options* options_;
-  Cache* cache_;
+  Cache* cache_; // NOTE:htt, ShardedLRUCache, 即分片LRUCache
 
   Status FindTable(uint64_t file_number, uint64_t file_size, Cache::Handle**);
 };
