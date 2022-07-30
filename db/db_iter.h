@@ -21,7 +21,7 @@ extern Iterator* NewDBIterator(
     const Comparator* user_key_comparator,
     Iterator* internal_iter,
     SequenceNumber sequence,
-    uint32_t seed);
+    uint32_t seed);// NOTE:htt, 构建DBIter
 
 }  // namespace leveldb
 
