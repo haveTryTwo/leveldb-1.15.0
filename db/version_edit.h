@@ -17,7 +17,7 @@ class VersionSet;
 struct FileMetaData { // NOTE:htt, 文件元信息
   int refs; // NOTE:htt, 引用次数, 如果为0则说明没有引用可以删除
   int allowed_seeks;          // Seeks allowed until compaction // NOTE:htt, 运行无效查询次数,用于读触发compaction
-  uint64_t number;  // NOTE:htt, file对应的数字
+  uint64_t number;  // NOTE:htt, file对应的数字,数字越大,文件越新
   uint64_t file_size;         // File size in bytes // NOTE:htt, 文件大小
   InternalKey smallest;       // Smallest internal key served by table // NOTE:htt, 内部key, {user_key, seq, t}三者组合
   InternalKey largest;        // Largest internal key served by table // NOTE:htt, 内部key, {user_key, seq, t}三者组合

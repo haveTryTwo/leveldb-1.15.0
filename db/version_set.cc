@@ -337,7 +337,7 @@ void Version::ForEachOverlapping(Slice user_key, Slice internal_key,
 Status Version::Get(const ReadOptions& options,
                     const LookupKey& k,
                     std::string* value,
-                    GetStats* stats) { // NOTE:htt, 从levelDB的7层文件来读取数据
+                    GetStats* stats) { // NOTE:htt, 从levelDB的7层文件来读取数据,先从0层读取,如果未找到则继续1层查找,直到找到或未找打
   Slice ikey = k.internal_key(); // NOTE:htt, 内部key, 即{user_key, seq, t}组合
   Slice user_key = k.user_key(); // NOTE:htt, 获取 user_key
   const Comparator* ucmp = vset_->icmp_.user_comparator(); // NOTE:htt, user_key比较器
@@ -397,7 +397,7 @@ Status Version::Get(const ReadOptions& options,
     for (uint32_t i = 0; i < num_files; ++i) { // NOTE:htt, 遍历获取到文件,查找ikey
       if (last_file_read != NULL && stats->seek_file == NULL) {
         // We have had more than one seek for this read.  Charge the 1st file.
-        stats->seek_file = last_file_read; // NOTE:htt, 上一次读取的文件,即空的的文件
+        stats->seek_file = last_file_read; // NOTE:htt, 上一次读取的文件,即上一次未找打,如果此次找到,则对上一次文件做合并操作
         stats->seek_file_level = last_file_read_level; // NOTE:htt, 上一次读取文件level
       }
 
@@ -438,15 +438,15 @@ bool Version::UpdateStats(const GetStats& stats) { // NOTE:htt, 根据空读的�
   if (f != NULL) {
     f->allowed_seeks--; // NOTE:htt, 减少allowed_seeks值, 如果为0则将将下一次compact的文件设置为当前空读次数减为0的文件
     if (f->allowed_seeks <= 0 && file_to_compact_ == NULL) {
-      file_to_compact_ = f;
-      file_to_compact_level_ = stats.seek_file_level;
+      file_to_compact_ = f; // NOTE:htt, 如果读文件超过个数则设置为下一次待合并文件
+      file_to_compact_level_ = stats.seek_file_level; // NOTE:htt, 记录对应待合并level
       return true;
     }
   }
   return false;
 }
 
-bool Version::RecordReadSample(Slice internal_key) { // NOTE:htt, 读采样,可以定位空读的文件
+bool Version::RecordReadSample(Slice internal_key) { // NOTE:htt, 读采样,保存首次match的文件,如果match超过2个文件则尝试更新待合并文件
   ParsedInternalKey ikey;
   if (!ParseInternalKey(internal_key, &ikey)) {
     return false;
@@ -795,7 +795,7 @@ VersionSet::VersionSet(const std::string& dbname,
       descriptor_log_(NULL),
       dummy_versions_(this),
       current_(NULL) {
-  AppendVersion(new Version(this)); // NOTE:htt, 添加version并设置为current
+  AppendVersion(new Version(this)); // NOTE:htt, 添加version并设置为current_
 }
 
 VersionSet::~VersionSet() {
@@ -847,7 +847,7 @@ Status VersionSet::LogAndApply(VersionEdit* edit, port::Mutex* mu) { // NOTE:htt
 
   // Initialize new descriptor log file if necessary by creating
   // a temporary file that contains a snapshot of the current version.
-  std::string new_manifest_file;
+  std::string new_manifest_file; // NOTE:htt, 用于确认是否产生了新的mainfest文件
   Status s;
   if (descriptor_log_ == NULL) { // NOTE:htt, 首次生成新的mainfest,并将现有文件compact和所有文件信息保存
     // No reason to unlock *mu here since we only hit this path in the
@@ -857,7 +857,7 @@ Status VersionSet::LogAndApply(VersionEdit* edit, port::Mutex* mu) { // NOTE:htt
     edit->SetNextFile(next_file_number_);
     s = env_->NewWritableFile(new_manifest_file, &descriptor_file_); // NOTE:htt, 生成mainfest文件实际写入的文件描述符
     if (s.ok()) {
-      descriptor_log_ = new log::Writer(descriptor_file_); // NOTE:htt, 封装mainfest描述符,采用WAL日志块方式分内容
+      descriptor_log_ = new log::Writer(descriptor_file_); // NOTE:htt, 封装mainfest描述符,采用WAL日志块方式分内容,一旦创建除非重新加载则当前会一直使用该 mainfest来存储新增的元信息,风险是如果重启则恢复时间会比较长,因为需要处理这个过程中的文件列表
       s = WriteSnapshot(descriptor_log_); // NOTE:htt, 保存当前compact值以及所有文件信息到mainfest(采用WAL日志格式写入)
     }
   }
@@ -1052,7 +1052,7 @@ void VersionSet::Finalize(Version* v) { // NOTE:htt, 设置当前Version 需要c
     } else {
       // Compute the ratio of current size to size limit.
       const uint64_t level_bytes = TotalFileSize(v->files_[level]); // NOTE:htt, 所有文件的大小之和
-      score = static_cast<double>(level_bytes) / MaxBytesForLevel(level); // NOTE:htt, 每层最大容量,0/1层10M, 2层100M, 3层1G, 4层10G, 5层100G, 6层1T
+      score = static_cast<double>(level_bytes) / MaxBytesForLevel(level); // NOTE:htt, 每层最大容量,0/1层10M, 2层100M, 3层1G, 4层10G, 5层100G, 6层1T, level>1层按照该层文件大小之和除以该层对应默认大小之和,如果超过并且越大则越先触发compaction
     }
 
     if (score > best_score) {
@@ -1095,7 +1095,7 @@ Status VersionSet::WriteSnapshot(log::Writer* log) { // NOTE:htt, 保存当前co
   return log->AddRecord(record); // NOTE:htt, 将slice写入到WAL日志中,如果长度大于块,则分多个部分写入
 }
 
-int VersionSet::NumLevelFiles(int level) const { // NOTE:htt, level层文件个数
+int VersionSet::NumLevelFiles(int level) const { // NOTE:htt, level每层文件个数
   assert(level >= 0);
   assert(level < config::kNumLevels);
   return current_->files_[level].size();
@@ -1121,7 +1121,7 @@ uint64_t VersionSet::ApproximateOffsetOf(Version* v, const InternalKey& ikey) { 
   for (int level = 0; level < config::kNumLevels; level++) {
     const std::vector<FileMetaData*>& files = v->files_[level];
     for (size_t i = 0; i < files.size(); i++) {
-      if (icmp_.Compare(files[i]->largest, ikey) <= 0) {
+      if (icmp_.Compare(files[i]->largest, ikey) <= 0) { // NOTE:htt, 比ikey小文件都统计
         // Entire file is before "ikey", so just add the file size
         result += files[i]->file_size; // NOTE:htt, 加上 file size,计算全局的offset
       } else if (icmp_.Compare(files[i]->smallest, ikey) > 0) {
@@ -1132,7 +1132,7 @@ uint64_t VersionSet::ApproximateOffsetOf(Version* v, const InternalKey& ikey) { 
           // "ikey".
           break;
         }
-      } else {
+      } else { // NOTE:htt, 如果恰好在某个sst文件内则进一步统计在文件中block的偏移
         // "ikey" falls in the range for this table.  Add the
         // approximate offset of "ikey" within the table.
         Table* tableptr;
@@ -1167,7 +1167,7 @@ int64_t VersionSet::NumLevelBytes(int level) const { // NOTE:htt, 计算当前Ve
   return TotalFileSize(current_->files_[level]);
 }
 
-int64_t VersionSet::MaxNextLevelOverlappingBytes() { // NOTE:htt, 获取所有level层每个文件和下一层文件交集,并获取交集最大的值
+int64_t VersionSet::MaxNextLevelOverlappingBytes() { // NOTE:htt, 获取所有从level1层开始每个文件和下一层文件交集,并获取交集最大的值
   int64_t result = 0;
   std::vector<FileMetaData*> overlaps;
   for (int level = 1; level < config::kNumLevels - 1; level++) { // NOE:htt, 计算每个level层中每个文件和下一层文件交集
@@ -1175,7 +1175,7 @@ int64_t VersionSet::MaxNextLevelOverlappingBytes() { // NOTE:htt, 获取所有le
       const FileMetaData* f = current_->files_[level][i];
       current_->GetOverlappingInputs(level+1, &f->smallest, &f->largest,
                                      &overlaps); // NOTE:htt, 获取当前文件和level+1有交集文件列表
-      const int64_t sum = TotalFileSize(overlaps);
+      const int64_t sum = TotalFileSize(overlaps); // NOTE:htt, 获取当前交集的大小
       if (sum > result) {
         result = sum;
       }
@@ -1262,10 +1262,10 @@ Compaction* VersionSet::PickCompaction() { // NOTE:htt, 选择待compact文件,�
   // the compactions triggered by seeks.
   const bool size_compaction = (current_->compaction_score_ >= 1);
   const bool seek_compaction = (current_->file_to_compact_ != NULL);
-  if (size_compaction) { // NOTE:htt, 按文件大小compact,查找level需要compact的文件
+  if (size_compaction) { // NOTE:htt, 按文件大小compact,查找level需要compact的文件,当前level层继续compact也需要满足条件
     level = current_->compaction_level_;
     assert(level >= 0);
-    assert(level+1 < config::kNumLevels);
+    assert(level+1 < config::kNumLevels); // NOTE:htt, 选择合并层<=5
     c = new Compaction(level);
 
     // Pick the first file that comes after compact_pointer_[level]
@@ -1279,7 +1279,7 @@ Compaction* VersionSet::PickCompaction() { // NOTE:htt, 选择待compact文件,�
     }
     if (c->inputs_[0].empty()) { // NOTE:htt, 如果input[0]为空,则从level层第一个文件开始
       // Wrap-around to the beginning of the key space
-      c->inputs_[0].push_back(current_->files_[level][0]);
+      c->inputs_[0].push_back(current_->files_[level][0]); // NOTE:htt, level层重新从第一个文件选择,则会重新计算largest key,并更新compact_pointer_[level]
     }
   } else if (seek_compaction) {
     level = current_->file_to_compact_level_;
@@ -1371,7 +1371,7 @@ void VersionSet::SetupOtherInputs(Compaction* c) { // NOTE:htt,计算input1待�
   // We update this immediately instead of waiting for the VersionEdit
   // to be applied so that if the compaction fails, we will try a different
   // key range next time.
-  compact_pointer_[level] = largest.Encode().ToString(); // NOTE:htt, 调整level层待compact最大key为largest
+  compact_pointer_[level] = largest.Encode().ToString(); // NOTE:htt, 调整level层待compact最大key {user_key,seq,t}为largest
   c->edit_.SetCompactPointer(level, largest); // NOTE:htt, 设置edit的levelcent待compact最大key为largest
 }
 

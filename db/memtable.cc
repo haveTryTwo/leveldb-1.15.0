@@ -11,15 +11,15 @@
 
 namespace leveldb {
 
-static Slice GetLengthPrefixedSlice(const char* data) { // NOTE:htt, 获取key
+static Slice GetLengthPrefixedSlice(const char* data) { // NOTE:htt, 获取value
   uint32_t len;
   const char* p = data;
-  p = GetVarint32Ptr(p, p + 5, &len);  // +5: we assume "p" is not corrupted // NOTE:htt, 获取key长度
-  return Slice(p, len); // NOTE:htt, 获取key
+  p = GetVarint32Ptr(p, p + 5, &len);  // +5: we assume "p" is not corrupted // NOTE:htt, 获取value长度
+  return Slice(p, len); // NOTE:htt, 获取value
 }
 
 MemTable::MemTable(const InternalKeyComparator& cmp)
-    : comparator_(cmp),
+    : comparator_(cmp), // NOTE:htt, comparator_为KeyComparator(InternalKeyComparator(BytewiseComparatorImpl))
       refs_(0),
       table_(comparator_, &arena_) {
 }
@@ -119,7 +119,7 @@ bool MemTable::Get(const LookupKey& key, std::string* value, Status* s) { // NOT
     // Check that it belongs to same user key.  We do not check the
     // sequence number since the Seek() call above should have skipped
     // all entries with overly large sequence numbers.
-    const char* entry = iter.key();
+    const char* entry = iter.key(); // NOTE:htt, entry格式  ${key_len}${user_key, seq, type}
     uint32_t key_length;
     const char* key_ptr = GetVarint32Ptr(entry, entry+5, &key_length);
     if (comparator_.comparator.user_comparator()->Compare(
@@ -129,7 +129,7 @@ bool MemTable::Get(const LookupKey& key, std::string* value, Status* s) { // NOT
       const uint64_t tag = DecodeFixed64(key_ptr + key_length - 8); // NOTE:htt, 获取{seq, type}组合
       switch (static_cast<ValueType>(tag & 0xff)) {
         case kTypeValue: { // NOTE:htt, 写入情况返回数据
-          Slice v = GetLengthPrefixedSlice(key_ptr + key_length); // NOTE:htt, 获取value的长度
+          Slice v = GetLengthPrefixedSlice(key_ptr + key_length); // NOTE:htt, 获取value的值
           value->assign(v.data(), v.size()); // NOTE:htt, 获取value
           return true;
         }

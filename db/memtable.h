@@ -66,8 +66,8 @@ class MemTable { // NOTE:htt, 内存table,采用跳表实现
  private:
   ~MemTable();  // Private since only Unref() should be used to delete it
 
-  struct KeyComparator { // NOTE:htt, key大小比对
-    const InternalKeyComparator comparator; // NOTE:htt, 比较器
+  struct KeyComparator { // NOTE:htt, key大小比对,先比较user_key(按递增序),如果相等则按seq递减排序:{key1,10,1},{key1,8,1},{key2,11,1}
+    const InternalKeyComparator comparator; // NOTE:htt, 比较器, 为InternalKeyComparator(BytewiseComparatorImpl);
     explicit KeyComparator(const InternalKeyComparator& c) : comparator(c) { }
     int operator()(const char* a, const char* b) const;
   };

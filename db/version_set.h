@@ -311,7 +311,7 @@ class VersionSet { // NOTE:htt, 管理Version(根据现有Version和edit生成�
 
   // Per-level key at which the next compaction at that level should start.
   // Either an empty string, or a valid InternalKey.
-  std::string compact_pointer_[config::kNumLevels]; // NOTE:htt, 每层下一个compact的文件
+  std::string compact_pointer_[config::kNumLevels]; // NOTE:htt, 每层下一个compact的{user_key, seq, t}值,这样在生成新的version后,可以根据情况从每层选择合适的继续合并的位置
 
   // No copying allowed
   VersionSet(const VersionSet&);
