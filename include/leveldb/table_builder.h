@@ -23,7 +23,7 @@ class BlockBuilder;
 class BlockHandle;
 class WritableFile;
 
-class TableBuilder {
+class TableBuilder { // NOTE:htt, 完成整个sstable写入,包括{data block列表, meta block, meta index block, index block, footer} 写入
  public:
   // Create a builder that will store the contents of the table it is
   // building in *file.  Does not close the file.  It is up to the
@@ -75,7 +75,7 @@ class TableBuilder {
   uint64_t FileSize() const;
 
  private:
-  bool ok() const { return status().ok(); }
+  bool ok() const { return status().ok(); } // NOTE:htt, 写入的状态
   void WriteBlock(BlockBuilder* block, BlockHandle* handle);
   void WriteRawBlock(const Slice& data, CompressionType, BlockHandle* handle);
 

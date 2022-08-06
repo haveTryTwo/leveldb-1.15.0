@@ -21,7 +21,7 @@ class TableCache;
 // A Table is a sorted map from strings to strings.  Tables are
 // immutable and persistent.  A Table may be safely accessed from
 // multiple threads without external synchronization.
-class Table {
+class Table { // NOTE:htt, 从sstable中读取数据,并对Block进行缓存
  public:
   // Attempt to open the table that is stored in bytes [0..file_size)
   // of "file", and read the metadata entries necessary to allow

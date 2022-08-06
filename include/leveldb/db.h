@@ -30,7 +30,7 @@ class Snapshot { // NOTE: htt, 快照,并且不可变对象，即可以被多线
 };
 
 // A range of keys
-struct Range {
+struct Range { // NOTE:htt, user key的range范围
   Slice start;          // Included in the range
   Slice limit;          // Not included in the range
 

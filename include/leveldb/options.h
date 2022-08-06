@@ -38,7 +38,7 @@ struct Options { // NOTE: htt, 数据库操作的options/*{{{*/
   // REQUIRES: The client must ensure that the comparator supplied
   // here has the same name and orders keys *exactly* the same as the
   // comparator provided to previous open calls on the same DB.
-  const Comparator* comparator; // NOTE: htt, 比较器
+  const Comparator* comparator; // NOTE: htt, 比较器,client需保证和已生成DB的comparator一致,默认为BytewiseComparatorImpl
 
   // If true, the database will be created if it is missing.
   // Default: false
@@ -126,7 +126,7 @@ struct Options { // NOTE: htt, 数据库操作的options/*{{{*/
   // worth switching to kNoCompression.  Even if the input data is
   // incompressible, the kSnappyCompression implementation will
   // efficiently detect that and will switch to uncompressed mode.
-  CompressionType compression; // NOTE: htt, 压缩算法
+  CompressionType compression; // NOTE: htt, 压缩算法,默认snappy压缩
 
   // If non-NULL, use the specified filter policy to reduce disk reads.
   // Many applications will benefit from passing the result of

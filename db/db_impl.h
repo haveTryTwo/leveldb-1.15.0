@@ -66,7 +66,7 @@ class DBImpl : public DB {
 
  private:
   friend class DB;
-  struct CompactionState;
+  struct CompactionState; // NOTE:htt, compaction状态,包括compaction后的文件列表
   struct Writer;
 
   Iterator* NewInternalIterator(const ReadOptions&,
@@ -120,65 +120,65 @@ class DBImpl : public DB {
 
   // Constant after construction
   Env* const env_;
-  const InternalKeyComparator internal_comparator_;
+  const InternalKeyComparator internal_comparator_; // NOTE:htt, internal key比较器
   const InternalFilterPolicy internal_filter_policy_;
   const Options options_;  // options_.comparator == &internal_comparator_
-  bool owns_info_log_;
-  bool owns_cache_;
-  const std::string dbname_;
+  bool owns_info_log_; // NOTE:htt, 是否启动了 info log,打印日常日志
+  bool owns_cache_; // NOTE:htt, 是否启动了 block cache
+  const std::string dbname_; // NOTE:htt, db名称
 
   // table_cache_ provides its own synchronization
-  TableCache* table_cache_;
+  TableCache* table_cache_; // NOTE:htt, sst文件cache
 
   // Lock over the persistent DB state.  Non-NULL iff successfully acquired.
-  FileLock* db_lock_;
+  FileLock* db_lock_; // NOTE:htt, 文件锁 ${dbname}/LOCK
 
   // State below is protected by mutex_
   port::Mutex mutex_;
   port::AtomicPointer shutting_down_;
   port::CondVar bg_cv_;          // Signalled when background work finishes
-  MemTable* mem_;
-  MemTable* imm_;                // Memtable being compacted
+  MemTable* mem_; // NOTE:htt, 可变内存
+  MemTable* imm_; // NOTE:htt, 不可变内存          // Memtable being compacted
   port::AtomicPointer has_imm_;  // So bg thread can detect non-NULL imm_
-  WritableFile* logfile_;
-  uint64_t logfile_number_;
-  log::Writer* log_;
-  uint32_t seed_;                // For sampling.
+  WritableFile* logfile_; // NOTE:htt, WAL底层操作文件写入的文件对象
+  uint64_t logfile_number_; // NOTE:htt, WAL日志文件number
+  log::Writer* log_; // NOTE:htt, 将记录写入WAL日志中,如果记录大于块长度,则拆分多个部分写入
+  uint32_t seed_;                // For sampling. // NOTE:htt, rand种子
 
   // Queue of writers.
-  std::deque<Writer*> writers_;
-  WriteBatch* tmp_batch_;
+  std::deque<Writer*> writers_; // NOTE:htt, 一批写入请求
+  WriteBatch* tmp_batch_; // NOTE:htt, 批量写对象
 
-  SnapshotList snapshots_;
+  SnapshotList snapshots_; // NOTE:htt, snaphost链表,将snapshot串联起来
 
   // Set of table files to protect from deletion because they are
   // part of ongoing compactions.
-  std::set<uint64_t> pending_outputs_;
+  std::set<uint64_t> pending_outputs_; // NOTE:htt, 当前正在compactions 文件number
 
   // Has a background compaction been scheduled or is running?
-  bool bg_compaction_scheduled_;
+  bool bg_compaction_scheduled_; // NOTE:htt, 当前正在进行段合并
 
   // Information for a manual compaction
-  struct ManualCompaction {
-    int level;
+  struct ManualCompaction { // NOTE:htt, 手动compaction
+    int level; // NOTE:htt, compact的层
     bool done;
     const InternalKey* begin;   // NULL means beginning of key range
     const InternalKey* end;     // NULL means end of key range
     InternalKey tmp_storage;    // Used to keep track of compaction progress
   };
-  ManualCompaction* manual_compaction_;
+  ManualCompaction* manual_compaction_; // NOTE:htt, 手动段合并
 
-  VersionSet* versions_;
+  VersionSet* versions_; // NOTE:htt, 当前使用的VersionSet
 
   // Have we encountered a background error in paranoid mode?
-  Status bg_error_;
+  Status bg_error_; // NOTE:htt, 后台运行状态
 
   // Per level compaction stats.  stats_[level] stores the stats for
   // compactions that produced data for the specified "level".
-  struct CompactionStats {
-    int64_t micros;
-    int64_t bytes_read;
-    int64_t bytes_written;
+  struct CompactionStats { // NOTE:htt, compaction统计
+    int64_t micros; // NOTE:htt, 毫秒
+    int64_t bytes_read; // NOTE:htt, 读取字节数
+    int64_t bytes_written; // NOTE:htt, 写入字节数
 
     CompactionStats() : micros(0), bytes_read(0), bytes_written(0) { }
 
@@ -188,13 +188,13 @@ class DBImpl : public DB {
       this->bytes_written += c.bytes_written;
     }
   };
-  CompactionStats stats_[config::kNumLevels];
+  CompactionStats stats_[config::kNumLevels]; // NOTE:htt, 每层的compaction统计
 
   // No copying allowed
   DBImpl(const DBImpl&);
   void operator=(const DBImpl&);
 
-  const Comparator* user_comparator() const {
+  const Comparator* user_comparator() const { // NOTE:htt, 获取InternalKey中 user key的比较器
     return internal_comparator_.user_comparator();
   }
 };

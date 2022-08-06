@@ -28,7 +28,7 @@ namespace leveldb {
 
 class Slice;
 
-class WriteBatch {
+class WriteBatch { // NOTE:htt, 批量写操作,将记录先编码到rep_,再有WriteBatchInternal实现记录追加到MemTable
  public:
   WriteBatch();
   ~WriteBatch();
@@ -43,7 +43,7 @@ class WriteBatch {
   void Clear();
 
   // Support for iterating over the contents of a batch.
-  class Handler {
+  class Handler { // NOTE:htt, 写<key,value> 和删除key 接口
    public:
     virtual ~Handler();
     virtual void Put(const Slice& key, const Slice& value) = 0;
@@ -53,7 +53,7 @@ class WriteBatch {
 
  private:
   friend class WriteBatchInternal;
-
+  // NOTE:htt,rep_为写操作编码后内容, 格式为 ${seq}${count}[${type}${key_len}${key}${value_len}${value}]
   std::string rep_;  // See comment in write_batch.cc for the format of rep_
 
   // Intentionally copyable
