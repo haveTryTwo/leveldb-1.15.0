@@ -19,12 +19,12 @@ class Env;
 
 enum FileType { // NOTE:htt, leveldb日志文件类型
   kLogFile, // NOTE:htt, WAL日志文件
-  kDBLockFile,
-  kTableFile,
+  kDBLockFile, // NOTE:htt, LOCK文件
+  kTableFile, // NOTE:htt, sst或ldb文件
   kDescriptorFile, // NOTE:htt, MANIFEST-* 文件
-  kCurrentFile,
-  kTempFile,
-  kInfoLogFile  // Either the current one, or an old one
+  kCurrentFile, // NOTE:htt, CURRENT 文件
+  kTempFile, // NOTE:htt, dbtmp文件
+  kInfoLogFile  // Either the current one, or an old one // NOTE:htt, 日志
 };
 
 // Return the name of the log file with the specified number

@@ -95,7 +95,7 @@ class SkipList { // NOTE:htt, 跳表
   enum { kMaxHeight = 12 }; // NOTE:htt, 最高12层
 
   // Immutable after construction
-  Comparator const compare_; // NOTE:htt, 比较器
+  Comparator const compare_; // NOTE:htt,key大小比对,为KeyComparator(InternalKeyComparator(BytewiseComparatorImpl)),先比较user_key(按递增序),如果相等则按seq递减排序:{key1,10,1},{key1,8,1},{key2,11,1},用户查询时seq为最新({key1,20,1},则比{key1,10,1}小,则会返回{key1,10,1})
   Arena* const arena_;    // Arena used for allocations of nodes
 
   Node* const head_; // NOTE:htt, 头结点<key=0, height=12>

@@ -35,7 +35,7 @@ WriteBatch::~WriteBatch() { }
 WriteBatch::Handler::~Handler() { }
 
 void WriteBatch::Clear() { // NOTE:htt, 清空rep
-  rep_.clear();
+  rep_.clear(); // NOTE:htt, 情况 rep数据
   rep_.resize(kHeader); // NOTE:htt, 设置头部长度: 序号+count
 }
 

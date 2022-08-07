@@ -111,7 +111,7 @@ bool ParseFileName(const std::string& fname,
     Slice suffix = rest;
     if (suffix == Slice(".log")) { // NOTE:htt, WAL日志
       *type = kLogFile;
-    } else if (suffix == Slice(".sst") || suffix == Slice(".ldb")) { // NOTE:htt, sst文件
+    } else if (suffix == Slice(".sst") || suffix == Slice(".ldb")) { // NOTE:htt, sst或ldb文件
       *type = kTableFile;
     } else if (suffix == Slice(".dbtmp")) { // NOTE:htt, dbtmp文件
       *type = kTempFile;
@@ -124,7 +124,7 @@ bool ParseFileName(const std::string& fname,
 }
 
 Status SetCurrentFile(Env* env, const std::string& dbname,
-                      uint64_t descriptor_number) { // NOTE:htt, 将MANIFEST-${number}写入到${dbname}/CURRENT
+                      uint64_t descriptor_number) { // NOTE:htt, 将MANIFEST-${number}值写入到${dbname}/CURRENT
   // Remove leading "dbname/" and add newline to manifest file name
   std::string manifest = DescriptorFileName(dbname, descriptor_number); // NOTE:htt, 构建MANIFEST文件, ${dbname}/MANIFEST-${number}
   Slice contents = manifest; // NOTE:htt, contents内容为 ${dbname}/MANIFEST-${number}

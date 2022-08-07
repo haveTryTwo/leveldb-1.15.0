@@ -125,7 +125,7 @@ bool Reader::ReadRecord(Slice* record, std::string* scratch) { // NOTE:htt, 读�
                            "missing start of fragmented record(2)");
         } else {
           scratch->append(fragment.data(), fragment.size()); // NOTE:htt, scratch保存最后部分日志内容
-          *record = Slice(*scratch);
+          *record = Slice(*scratch); // NOTE:htt, 将这个日志复制到record中
           last_record_offset_ = prospective_record_offset; // NOTE:htt, 设置最近一条完整日志在WAL的偏移
           return true;
         }

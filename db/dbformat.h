@@ -39,7 +39,7 @@ static const int kL0_StopWritesTrigger = 12; // NOTE:htt, level0层达到12文�
 static const int kMaxMemCompactLevel = 2;
 
 // Approximate gap in bytes between samples of data read during iteration.
-static const int kReadBytesPeriod = 1048576;
+static const int kReadBytesPeriod = 1048576; // NOTE:htt, 1M
 
 }  // namespace config
 
@@ -130,7 +130,7 @@ class InternalKeyComparator : public Comparator { // NOTE:htt, 内部key采用�
 // Filter policy wrapper that converts from internal keys to user keys
 class InternalFilterPolicy : public FilterPolicy { // NOTE:htt, 内部过滤策略
  private:
-  const FilterPolicy* const user_policy_;
+  const FilterPolicy* const user_policy_; // NOTE:htt, 过滤器策略
  public:
   explicit InternalFilterPolicy(const FilterPolicy* p) : user_policy_(p) { }
   virtual const char* Name() const;
@@ -195,7 +195,7 @@ class LookupKey { // NOTE:htt, 通过{user_key, seq, ValueType} 构建 LookupKey
   ~LookupKey();
 
   // Return a key suitable for lookup in a MemTable.
-  Slice memtable_key() const { return Slice(start_, end_ - start_); } // NOTE:htt, memtable使用key
+  Slice memtable_key() const { return Slice(start_, end_ - start_); } // NOTE:htt, memtable使用key,即 ${key_len}{user_key,seq,t}
 
   // Return an internal key (suitable for passing to an internal iterator)
   Slice internal_key() const { return Slice(kstart_, end_ - kstart_); } // NOTE:htt, 内部key, 即{user_key, seq, t}组合
