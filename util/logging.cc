@@ -70,7 +70,7 @@ bool ConsumeDecimalNumber(Slice* in, uint64_t* val) { // NOTE:htt, 将可读整�
       }
       v = (v * 10) + delta;
       in->remove_prefix(1); // NOTE: htt, 移除第一个字符
-    } else {
+    } else { // NOTE:htt, 非数字则终结
       break;
     }
   }

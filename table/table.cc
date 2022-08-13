@@ -155,7 +155,7 @@ Iterator* Table::BlockReader(void* arg,
                              const ReadOptions& options,
                              const Slice& index_value) { // NOTE:htt, 读取Block,并且根据需要进行缓存
   Table* table = reinterpret_cast<Table*>(arg);
-  Cache* block_cache = table->rep_->options.block_cache; // NOTE:htt, 获取Cache
+  Cache* block_cache = table->rep_->options.block_cache; // NOTE:htt, 获取Block Cache,在options中指定是否启动block_cache
   Block* block = NULL;
   Cache::Handle* cache_handle = NULL;
 
@@ -171,7 +171,7 @@ Iterator* Table::BlockReader(void* arg,
       char cache_key_buffer[16];
       EncodeFixed64(cache_key_buffer, table->rep_->cache_id);
       EncodeFixed64(cache_key_buffer+8, handle.offset());
-      Slice key(cache_key_buffer, sizeof(cache_key_buffer)); // NOTE:htt, Block缓存的key: cache_id+handle.offset()
+      Slice key(cache_key_buffer, sizeof(cache_key_buffer)); // NOTE:htt, Block缓存的key: cache_id+handle.offset(), offset为block偏移
       cache_handle = block_cache->Lookup(key);
       if (cache_handle != NULL) { // NOTE:htt, 存储Block的缓存
         block = reinterpret_cast<Block*>(block_cache->Value(cache_handle)); // NOTE:htt, 得到缓存的Block
@@ -260,7 +260,7 @@ uint64_t Table::ApproximateOffsetOf(const Slice& key) const { // NOTE:htt, 找�
       // Strange: we can't decode the block handle in the index block.
       // We'll just return the offset of the metaindex block, which is
       // close to the whole file size for this case.
-      result = rep_->metaindex_handle.offset();
+      result = rep_->metaindex_handle.offset(); // NOTE:htt, meta index的偏移，近乎整个sst文件的偏移
     }
   } else {
     // key is past the last key in the file.  Approximate the offset

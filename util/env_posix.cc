@@ -187,7 +187,7 @@ class PosixWritableFile : public WritableFile { // NOTE: htt, 写入文件操作
   ~PosixWritableFile() {
     if (file_ != NULL) {
       // Ignoring any potential errors
-      fclose(file_); // NOTE: htt, 关闭文件，同时最后设置 file_=NULL;
+      fclose(file_); // NOTE: htt, 关闭文件,会刷盘内容,同时最后设置 file_=NULL;
     }
   }
 
