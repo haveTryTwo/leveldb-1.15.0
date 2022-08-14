@@ -13,7 +13,7 @@ class Env;
 // all non-file-storage tasks to base_env. The caller must delete the result
 // when it is no longer needed.
 // *base_env must remain live while the result is in use.
-Env* NewMemEnv(Env* base_env);
+Env* NewMemEnv(Env* base_env);// NOTE: htt, 创建内存文件环境对象，以便模拟读写文件
 
 }  // namespace leveldb
 
