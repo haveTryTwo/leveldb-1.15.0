@@ -1086,7 +1086,7 @@ namespace leveldb {
             snapshot = versions_->LastSequence(); // NOTE:htt, 获取last sequence
         }
 
-        fprintf(stderr, "key:%s, snapshot:%llu\n", key.data(), snapshot); // TODO:htt, delete
+        // fprintf(stderr, "key:%s, snapshot:%llu\n", key.data(), snapshot); // TODO:htt, delete
 
         MemTable* mem = mem_;
         MemTable* imm = imm_;

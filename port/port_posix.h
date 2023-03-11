@@ -92,7 +92,7 @@ class Mutex { // NOTE: htt, 互斥锁
   void AssertHeld() { }
 
  private:
-  friend class CondVar;
+  friend class CondVar; // NOTE:htt, friend类
   pthread_mutex_t mu_;
 
   // No copying

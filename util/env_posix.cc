@@ -596,11 +596,11 @@ void PosixEnv::StartThread(void (*function)(void* arg), void* arg) { // NOTE: ht
 }  // namespace
 
 static pthread_once_t once = PTHREAD_ONCE_INIT;
-static Env* default_env; // NOTE: htt, 本文件私有对象
-static void InitDefaultEnv() { default_env = new PosixEnv; }
+static Env* default_env; // NOTE: htt, 本文件私有对象,并且只会被初始化一次(pthread_once)
+static void InitDefaultEnv() { default_env = new PosixEnv; } // NOTE:htt, 默认采用PosixEnv为Env
 
 Env* Env::Default() { // NOTE: htt, 默认方式，构建 Env* 对象
-  pthread_once(&once, InitDefaultEnv); // NOTE: htt, 执行一次 DefaultEnv的初始化
+  pthread_once(&once, InitDefaultEnv); // NOTE: htt, 执行一次 DefaultEnv的初始化,默认采用PosixEnv
   return default_env;
 }
 

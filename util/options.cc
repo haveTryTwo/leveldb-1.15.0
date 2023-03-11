@@ -14,7 +14,7 @@ Options::Options() // NOTE: htt, options默认值
       create_if_missing(false),
       error_if_exists(false),
       paranoid_checks(false),
-      env(Env::Default()),
+      env(Env::Default()), // NOTE:htt, 生成默认的Env,即PosixEnv
       info_log(NULL),
       write_buffer_size(4<<20),
       max_open_files(1000),

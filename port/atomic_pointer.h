@@ -106,7 +106,7 @@ inline void MemoryBarrier() { // NOTE: htt, 内存屏障
 
 // AtomicPointer built using platform-specific MemoryBarrier()
 #if defined(LEVELDB_HAVE_MEMORY_BARRIER)
-class AtomicPointer {
+class AtomicPointer { // NOTE:htt, 采用内存屏障来读写数据
  private:
   void* rep_;
  public:
@@ -119,7 +119,7 @@ class AtomicPointer {
     MemoryBarrier(); // NOTE: htt, 保证之前的内存可见
     return result;
   }
-  inline void Release_Store(void* v) {
+  inline void Release_Store(void* v) { // NOTE:htt, 带内存屏障写入
     MemoryBarrier(); // NOTE: htt, 保证之前内容可见
     rep_ = v;
   }

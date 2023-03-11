@@ -196,7 +196,7 @@ class Block::Iter : public Iterator { // NOTE: htt, block内部迭代器,实现�
       if (!ParseNextKey()) { // NOTE: htt, 顺序遍历,读取下一个<key,value>
         return;
       }
-      if (Compare(key_, target) >= 0) { // NOTE: htt, 找到第一个key 等于 target
+      if (Compare(key_, target) >= 0) { // NOTE: htt, 找到第一个key 等于 target,即默认升序
         return;
       }
     }

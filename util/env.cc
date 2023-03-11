@@ -68,7 +68,7 @@ Status WriteStringToFileSync(Env* env, const Slice& data,
 Status ReadFileToString(Env* env, const std::string& fname, std::string* data) { // NOTE: htt, 读取文件内容到data中
   data->clear();
   SequentialFile* file;
-  Status s = env->NewSequentialFile(fname, &file);
+  Status s = env->NewSequentialFile(fname, &file); // NOTE: htt, 创建顺序读取文件
   if (!s.ok()) {
     return s;
   }
