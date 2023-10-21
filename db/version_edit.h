@@ -84,7 +84,7 @@ class VersionEdit { // NOTE:htt, 中间状态,记录compaction后增加以及删
  private:
   friend class VersionSet;
 
-  typedef std::set< std::pair<int, uint64_t> > DeletedFileSet;
+  typedef std::set< std::pair<int, uint64_t> > DeletedFileSet; // NOTE:htt, 删除文件类型
 
   std::string comparator_; // NOTE:htt, 比较器名称
   uint64_t log_number_; // NOTE:htt, 日志number信息,日志文件和Memtable是一一对应
