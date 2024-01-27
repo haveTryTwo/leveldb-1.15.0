@@ -25,7 +25,7 @@ class MergingIterator : public Iterator { // NOTE:htt, 处理一组iterator,然�
   }
 
   virtual ~MergingIterator() {
-    delete[] children_;
+    delete[] children_; // NOTE:htt, 内部生成的，需要自动释放，其他的comparator_外部传入，由外部处理
   }
 
   virtual bool Valid() const {
