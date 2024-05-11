@@ -45,6 +45,10 @@
 #ifdef SNAPPY
 #include <snappy.h>
 #endif
+#ifdef ZSTD
+#include <zstd.h>
+#endif
+
 #include <stdint.h>
 #include <string>
 #include "port/atomic_pointer.h"
@@ -123,9 +127,15 @@ inline bool Snappy_Compress(const char* input, size_t length,
   size_t outlen;
   snappy::RawCompress(input, length, &(*output)[0], &outlen);
   output->resize(outlen);
+#ifdef _TEST_
+  fprintf(stderr, "has snappy!\n");
+#endif
   return true;
 #endif
 
+#ifdef _TEST_
+  fprintf(stderr, "no snappy!\n");
+#endif
   return false;
 }/*}}}*/
 
@@ -139,13 +149,71 @@ inline bool Snappy_GetUncompressedLength(const char* input, size_t length,
 }/*}}}*/
 
 inline bool Snappy_Uncompress(const char* input, size_t length,
-                              char* output) { // NOTE: htt, snappy解压缩
+                              char* output) { // NOTE: htt, snappy解压缩{{{
 #ifdef SNAPPY
   return snappy::RawUncompress(input, length, output);
 #else
   return false;
 #endif
-}
+}/*}}}*/
+
+
+inline bool Zstd_Compress(const char* input, size_t length,
+                            ::std::string* output) { // NOTE: htt, zstd压缩{{{
+#ifdef ZSTD
+  size_t compress_len = ZSTD_compressBound(length);
+  if (ZSTD_isError(compress_len) != 0) return false;
+
+  char *zstd_compressed_data = new char[compress_len];
+  if (zstd_compressed_data == NULL) return false;
+
+  size_t ret_compress_len = ZSTD_compress(zstd_compressed_data, compress_len, input, length, 0);
+  if (ZSTD_isError(ret_compress_len) != 0) {
+      delete[] zstd_compressed_data;
+      return false;
+  }
+
+  output->assign(zstd_compressed_data, ret_compress_len);
+
+  delete[] zstd_compressed_data;
+
+  return true;
+#endif
+
+  return false;
+}/*}}}*/
+
+inline bool Zstd_GetUncompressedLength(const char* input, size_t length,
+                                         size_t* result) { // NOTE: htt, 获取ztsd解压缩后的长度{{{
+#ifdef ZSTD
+  unsigned long long const uncompress_len =
+    ZSTD_getFrameContentSize(input, length);
+  if (uncompress_len == ZSTD_CONTENTSIZE_ERROR || uncompress_len == ZSTD_CONTENTSIZE_UNKNOWN) {
+    return false;
+  }
+  *result = uncompress_len;
+  return true;
+#else
+  return false;
+#endif
+}/*}}}*/
+
+inline bool Zstd_Uncompress(const char* input, size_t length,
+                              char* output, char* output_len) { // NOTE: htt, 解压缩{{{
+#ifdef ZSTD
+  size_t ret_uncompress_len =
+    ZSTD_decompress(output, *output_len, input, length);
+  if (ZSTD_isError(ret_uncompress_len) != 0) {
+    return false;
+  }
+  *output_len = ret_uncompress_len; // NOTE:htt, 返回实际的解压后的大小
+  return true;
+#else
+  return false;
+#endif
+}/*}}}*/
+
+
 
 inline bool GetHeapProfile(void (*func)(void*, const char*, int), void* arg) {
   return false;
