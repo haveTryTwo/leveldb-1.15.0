@@ -7,6 +7,8 @@
 
 #include <stddef.h>
 
+#include <string>
+
 namespace leveldb {
 
 class Cache;
@@ -24,7 +26,13 @@ enum CompressionType { // NOTE: htt, 压缩算法
   // NOTE: do not change the values of existing entries, as these are
   // part of the persistent format on disk.
   kNoCompression     = 0x0,
-  kSnappyCompression = 0x1
+  kSnappyCompression = 0x1,
+
+  kZstdCompression = 0x2, // NOTE:htt, 支持zstd
+
+  // NOTE:htt, 压缩和加密机制可以相互组合,组合后先压缩再加密
+  kEncrpytAESCTR = 0x10,
+  kEncrpytAESGCM = 0x20,
 };
 
 // Options to control the behavior of a database (passed to DB::Open)
@@ -126,7 +134,7 @@ struct Options { // NOTE: htt, 数据库操作的options/*{{{*/
   // worth switching to kNoCompression.  Even if the input data is
   // incompressible, the kSnappyCompression implementation will
   // efficiently detect that and will switch to uncompressed mode.
-  CompressionType compression; // NOTE: htt, 压缩算法,默认snappy压缩
+  CompressionType compression; // NOTE: htt, 压缩算法,默认snappy压缩,并支持加密算法
 
   // If non-NULL, use the specified filter policy to reduce disk reads.
   // Many applications will benefit from passing the result of
@@ -134,6 +142,10 @@ struct Options { // NOTE: htt, 数据库操作的options/*{{{*/
   //
   // Default: NULL
   const FilterPolicy* filter_policy; // NOTE: htt, bloom过滤器,方便快速定位key是否存在
+
+  std::string encrypt_key; // NOTE:htt, 加密使用的key
+
+  std::string encrypt_iv; // NOTE:htt, 加密使用的iv
 
   // Create an Options object with default values for all fields.
   Options();

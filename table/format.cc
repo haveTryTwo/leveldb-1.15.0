@@ -117,6 +117,7 @@ Status ReadBlock(RandomAccessFile* file,
       // Ok
       break;
     case kSnappyCompression: { // NOTE; htt, 有压缩
+      fprintf(stderr, "snappy decompression\n");
       size_t ulength = 0;
       if (!port::Snappy_GetUncompressedLength(data, n, &ulength)) {
         delete[] buf;
@@ -124,6 +125,25 @@ Status ReadBlock(RandomAccessFile* file,
       }
       char* ubuf = new char[ulength];
       if (!port::Snappy_Uncompress(data, n, ubuf)) {
+        delete[] buf;
+        delete[] ubuf;
+        return Status::Corruption("corrupted compressed block contents");
+      }
+      delete[] buf;
+      result->data = Slice(ubuf, ulength); // NOTE: htt, 有压缩情况，则直接使用新的内存空间
+      result->heap_allocated = true;
+      result->cachable = true;
+      break;
+    }
+    case kZstdCompression: { // NOTE; htt, 有压缩
+      fprintf(stderr, "zstd decompression\n");
+      size_t ulength = 0;
+      if (!port::Zstd_GetUncompressedLength(data, n, &ulength)) {
+        delete[] buf;
+        return Status::Corruption("corrupted compressed block contents");
+      }
+      char* ubuf = new char[ulength];
+      if (!port::Zstd_Uncompress(data, n, ubuf, &ulength)) { // NOTE:htt, ulength可能会变化
         delete[] buf;
         delete[] ubuf;
         return Status::Corruption("corrupted compressed block contents");

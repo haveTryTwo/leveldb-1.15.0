@@ -176,7 +176,6 @@ inline bool Zstd_Compress(const char* input, size_t length,
   output->assign(zstd_compressed_data, ret_compress_len);
 
   delete[] zstd_compressed_data;
-
   return true;
 #endif
 
@@ -199,7 +198,7 @@ inline bool Zstd_GetUncompressedLength(const char* input, size_t length,
 }/*}}}*/
 
 inline bool Zstd_Uncompress(const char* input, size_t length,
-                              char* output, char* output_len) { // NOTE: htt, 解压缩{{{
+                              char* output, size_t* output_len) { // NOTE: htt, 解压缩{{{
 #ifdef ZSTD
   size_t ret_uncompress_len =
     ZSTD_decompress(output, *output_len, input, length);
