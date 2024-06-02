@@ -164,18 +164,10 @@ inline bool Zstd_Compress(const char* input, size_t length,
   size_t compress_len = ZSTD_compressBound(length);
   if (ZSTD_isError(compress_len) != 0) return false;
 
-  char *zstd_compressed_data = new char[compress_len];
-  if (zstd_compressed_data == NULL) return false;
-
-  size_t ret_compress_len = ZSTD_compress(zstd_compressed_data, compress_len, input, length, 0);
-  if (ZSTD_isError(ret_compress_len) != 0) {
-      delete[] zstd_compressed_data;
-      return false;
-  }
-
-  output->assign(zstd_compressed_data, ret_compress_len);
-
-  delete[] zstd_compressed_data;
+  output->resize(compress_len);
+  size_t ret_compress_len = ZSTD_compress(&(*output)[0], compress_len, input, length, 0);
+  if (ZSTD_isError(ret_compress_len) != 0) return false;
+  output->resize(ret_compress_len);
   return true;
 #endif
 
