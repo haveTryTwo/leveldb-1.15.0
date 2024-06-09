@@ -85,6 +85,52 @@ class TableBuilder { // NOTE:htt, 完成整个sstable写入,包括{data block列
   // No copying allowed
   TableBuilder(const TableBuilder&);
   void operator=(const TableBuilder&);
+
+  private:
+  class BaseCompress {
+    public:
+      BaseCompress(Rep* r, Slice raw, Slice block_contents);
+      virtual ~BaseCompress();
+
+    public:
+      virtual Status Compress();
+
+    public:
+      Rep* r_;
+      Slice raw_;
+      Slice block_contents_;
+      CompressionType type_;
+  };
+
+  class NoCompress : public BaseCompress {
+    public:
+      NoCompress(Rep* r, Slice raw, Slice block_contents);
+      virtual ~NoCompress();
+    public:
+      virtual Status Compress();
+  };
+
+  class SnappyCompress : public BaseCompress {
+    public:
+      SnappyCompress(Rep* r, Slice raw, Slice block_contents);
+      virtual ~SnappyCompress();
+    public:
+      virtual Status Compress();
+  };
+
+  class ZstdCompress : public BaseCompress {
+    public:
+      ZstdCompress(Rep* r, Slice raw, Slice block_contents);
+      virtual ~ZstdCompress();
+    public:
+      virtual Status Compress();
+  };
+
+  class CompressFactory {
+    public:
+      static BaseCompress* CreateCompress(Rep* r, Slice raw, Slice block_contents, CompressionType type);
+  };
+
 };
 
 }  // namespace leveldb

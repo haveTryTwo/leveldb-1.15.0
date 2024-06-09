@@ -89,7 +89,7 @@ class Status { // NOTE: htt, 状态码，包括生成状态码，判断状态码
   static const char* CopyState(const char* s);
 };
 
-inline Status::Status(const Status& s) {
+inline Status::Status(const Status& s) { // NOTE:htt, 深度copy，是否有必要？因为只有错误时才copy，并且内容应该很短可以接受
   state_ = (s.state_ == NULL) ? NULL : CopyState(s.state_);
 }
 inline void Status::operator=(const Status& s) {

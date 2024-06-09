@@ -60,6 +60,124 @@ struct TableBuilder::Rep { // NOTE:htt, tableBuilder构建sstable需要的变量
   }
 };
 
+/**
+ * base compress
+ */
+TableBuilder::BaseCompress::BaseCompress(Rep* r, Slice raw, Slice block_contents) :
+  r_(r), raw_(raw), block_contents_(block_contents), type_(kNoCompression) {}
+
+TableBuilder::BaseCompress::~BaseCompress() {}
+
+Status TableBuilder::BaseCompress::Compress() {
+  return Status::NotSupported("not support base compress!");
+}
+
+/**
+ * no compress
+ */
+TableBuilder::NoCompress::NoCompress(Rep* r, Slice raw, Slice block_contents) :
+  BaseCompress(r, raw, block_contents) {
+    type_ = kNoCompression;
+}
+
+TableBuilder::NoCompress::~NoCompress() {}
+
+Status TableBuilder::NoCompress::Compress() {/*{{{*/
+  block_contents_ = raw_;
+  return Status::OK();
+}/*}}}*/
+
+/**
+ * snappy compress
+ */
+TableBuilder::SnappyCompress::SnappyCompress(Rep* r, Slice raw, Slice block_contents) :
+  BaseCompress(r, raw, block_contents) {
+    type_ = kSnappyCompression;
+}
+
+TableBuilder::SnappyCompress::~SnappyCompress() {}
+
+Status TableBuilder::SnappyCompress::Compress() {/*{{{*/
+  std::string* compressed = &r_->compressed_output;
+  if (port::Snappy_Compress(raw_.data(), raw_.size(), compressed) &&
+      compressed->size() < raw_.size() - (raw_.size() / 8u)) { // NOTE:htt,只有压缩率大于1-87.5%,当前block才采用压缩
+    block_contents_ = *compressed;
+#ifdef _TEST_
+    fprintf(stderr, "snappy compressed size:%zu, raw size:%zu, ratio to:%f%%\n",
+        compressed->size(), raw_.size(), ((double)compressed->size()/raw_.size())*100);
+#endif
+  } else {
+#ifdef _TEST_
+    fprintf(stderr, "not support snappy!\n");
+    if (port::Snappy_Compress(raw_.data(), raw_.size(), compressed)) {
+      fprintf(stderr, "snappy compressed size:%zu, raw size:%zu, ratio to:%f%%\n",
+          compressed->size(), raw_.size(), ((double)compressed->size()/raw_.size())*100);
+    }
+#endif
+    // Snappy not supported, or compressed less than 12.5%, so just
+    // store uncompressed form
+    block_contents_ = raw_; // NOTE:htt, 压缩率小于1-87.5%,当前block直接用原始数据,压缩率=(1-压缩后大小/压缩前大小)*100%
+    type_ = kNoCompression;
+  }
+
+  return Status::OK();
+}/*}}}*/
+
+/**
+ * zstd compress
+ */
+TableBuilder::ZstdCompress::ZstdCompress(Rep* r, Slice raw, Slice block_contents) :
+  BaseCompress(r, raw, block_contents) {
+    type_ = kZstdCompression;
+}
+
+TableBuilder::ZstdCompress::~ZstdCompress() {}
+
+Status TableBuilder::ZstdCompress::Compress() {/*{{{*/
+  std::string* compressed = &r_->compressed_output;
+  if (port::Zstd_Compress(raw_.data(), raw_.size(), compressed) &&
+      compressed->size() < raw_.size() - (raw_.size() / 8u)) { // NOTE:htt,只有压缩率大于1-87.5%,当前block才采用压缩
+    block_contents_ = *compressed;
+#ifdef _TEST_
+    fprintf(stderr, "zstd compressed size:%zu, raw size:%zu, ratio to:%f%%\n",
+        compressed->size(), raw_.size(), ((double)compressed->size()/raw_.size())*100);
+#endif
+  } else {
+#ifdef _TEST_
+    fprintf(stderr, "not support zstd!\n");
+    if (port::Zstd_Compress(raw_.data(), raw_.size(), compressed)) {
+      fprintf(stderr, "zstd compressed size:%zu, raw size:%zu, ratio to:%f%%\n",
+          compressed->size(), raw_.size(), ((double)compressed->size()/raw_.size())*100);
+    }
+#endif
+    // Zstd not supported, or compressed less than 12.5%, so just
+    // store uncompressed form
+    block_contents_ = raw_; // NOTE:htt, 压缩率小于1-87.5%,当前block直接用原始数据,压缩率=(1-压缩后大小/压缩前大小)*100%
+    type_ = kNoCompression;
+  }
+  return Status::OK();
+}/*}}}*/
+
+/**
+ * Compress Factory
+ */
+TableBuilder::BaseCompress* TableBuilder::CompressFactory::CreateCompress(
+    Rep* r, Slice raw, Slice block_contents, CompressionType type) {/*{{{*/
+  switch (type) {
+    case kNoCompression:
+      return new NoCompress(r, raw, block_contents);
+    case kSnappyCompression:
+      return new SnappyCompress(r, raw, block_contents);
+    case kZstdCompression:
+      return new ZstdCompress(r, raw, block_contents);
+    default:
+      break;
+  }
+  // 默认采用不压缩机制
+  return new NoCompress(r, raw, block_contents);
+}/*}}}*/
+
+
 TableBuilder::TableBuilder(const Options& options, WritableFile* file)
     : rep_(new Rep(options, file)) {
   if (rep_->filter_block != NULL) {
@@ -147,64 +265,26 @@ void TableBuilder::WriteBlock(BlockBuilder* block, BlockHandle* handle) { // NOT
 
   Slice block_contents;
   CompressionType type = r->options.compression; // NOTE:htt, 压缩算法
-  // TODO(postrelease): Support more compression options: zlib?
-  switch (type) {
-    case kNoCompression:
-      block_contents = raw;
-      break;
 
-    case kSnappyCompression: {/*{{{*/
-      std::string* compressed = &r->compressed_output;
-      if (port::Snappy_Compress(raw.data(), raw.size(), compressed) &&
-          compressed->size() < raw.size() - (raw.size() / 8u)) { // NOTE:htt,只有压缩率大于1-87.5%,当前block才采用压缩
-        block_contents = *compressed;
-#ifdef _TEST_
-        fprintf(stderr, "compressed size:%zu, raw size:%zu, ratio to:%f%%\n",
-            compressed->size(), raw.size(), ((double)compressed->size()/raw.size())*100);
-#endif
-      } else {
-#ifdef _TEST_
-        fprintf(stderr, "not support snappy!\n");
-        if (port::Snappy_Compress(raw.data(), raw.size(), compressed)) {
-          fprintf(stderr, "compressed size:%zu, raw size:%zu, ratio to:%f%%\n",
-              compressed->size(), raw.size(), ((double)compressed->size()/raw.size())*100);
-        }
-#endif
-        // Snappy not supported, or compressed less than 12.5%, so just
-        // store uncompressed form
-        block_contents = raw; // NOTE:htt, 压缩率小于1-87.5%,当前block直接用原始数据,压缩率=(1-压缩后大小/压缩前大小)*100%
-        type = kNoCompression;
-      }
-      break;
-    }/*}}}*/
-    case kZstdCompression: {
-      std::string* compressed = &r->compressed_output;
-      if (port::Zstd_Compress(raw.data(), raw.size(), compressed) &&
-          compressed->size() < raw.size() - (raw.size() / 8u)) { // NOTE:htt,只有压缩率大于1-87.5%,当前block才采用压缩
-        block_contents = *compressed;
-#ifdef _TEST_
-        fprintf(stderr, "zstd compressed size:%zu, raw size:%zu, ratio to:%f%%\n",
-            compressed->size(), raw.size(), ((double)compressed->size()/raw.size())*100);
-#endif
-      } else {
-#ifdef _TEST_
-        fprintf(stderr, "not support zstd!\n");
-        if (port::Zstd_Compress(raw.data(), raw.size(), compressed)) {
-          fprintf(stderr, "zstd compressed size:%zu, raw size:%zu, ratio to:%f%%\n",
-              compressed->size(), raw.size(), ((double)compressed->size()/raw.size())*100);
-        }
-#endif
-        // Snappy not supported, or compressed less than 12.5%, so just
-        // store uncompressed form
-        block_contents = raw; // NOTE:htt, 压缩率小于1-87.5%,当前block直接用原始数据,压缩率=(1-压缩后大小/压缩前大小)*100%
-        type = kNoCompression;
-      }
-      break;
-    }
+  // create compress class
+  BaseCompress* compress = CompressFactory::CreateCompress(r, raw, block_contents, type);
+  if (compress == NULL) {
+    r->status = Status::Corruption("create compress failed!");
+    return;
   }
-  WriteRawBlock(block_contents, type, handle); // NOTE:htt, 将 {data block, type, crc32} 写入文件
+
+  Status s = compress->Compress();
+  if (!s.ok()) {
+    r->status = s;
+    delete compress;
+    return;
+  }
+
+  WriteRawBlock(compress->block_contents_, compress->type_, handle); // NOTE:htt, 将 {data block, type, crc32} 写入文件
   r->compressed_output.clear(); // NOTE:htt, 清空临时压缩结果
   block->Reset(); // NOTE:htt, 重置data block
+
+  delete compress;
 }
 
 void TableBuilder::WriteRawBlock(const Slice& block_contents,
