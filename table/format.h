@@ -103,6 +103,50 @@ inline BlockHandle::BlockHandle()
       size_(~static_cast<uint64_t>(0)) { // NOTE: htt, 构造为2^64-1
 }
 
+class BaseUnCompress {
+  public:
+    BaseUnCompress(const char *data, char *buf, BlockContents *result, size_t n);
+    virtual ~BaseUnCompress();
+
+  public:
+    virtual Status UnCompress();
+
+  public:
+    const char *data_;
+    char *buf_;
+    BlockContents *result_;
+    size_t n_;
+};
+
+class NoUnCompress : public BaseUnCompress {
+  public:
+    NoUnCompress(const char *data, char *buf, BlockContents *result, size_t n);
+    virtual ~NoUnCompress();
+  public:
+    virtual Status UnCompress();
+};
+
+class SnappyUnCompress : public BaseUnCompress {
+  public:
+    SnappyUnCompress(const char *data, char *buf, BlockContents *result, size_t n);
+    virtual ~SnappyUnCompress();
+  public:
+    virtual Status UnCompress();
+};
+
+class ZstdUnCompress : public BaseUnCompress {
+  public:
+    ZstdUnCompress(const char *data, char *buf, BlockContents *result, size_t n);
+    virtual ~ZstdUnCompress();
+  public:
+    virtual Status UnCompress();
+};
+
+class UnCompressFactory {
+  public:
+    static BaseUnCompress* CreateUnCompress(const char *data, char *buf, BlockContents *result, size_t n, CompressionType type);
+};
+
 }  // namespace leveldb
 
 #endif  // STORAGE_LEVELDB_TABLE_FORMAT_H_

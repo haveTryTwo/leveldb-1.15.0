@@ -63,6 +63,119 @@ Status Footer::DecodeFrom(Slice* input) { // NOTE: htt, 解析footer，并将inp
   return result;
 }
 
+/**
+ * base uncompres
+ */
+BaseUnCompress::BaseUnCompress(const char *data, char *buf, BlockContents *result, size_t n) :
+  data_(data), buf_(buf), result_(result), n_(n) {}
+
+BaseUnCompress::~BaseUnCompress() {}
+
+Status BaseUnCompress::UnCompress() {
+  return Status::NotSupported("not support base uncompress!");
+}
+
+/**
+ * no uncompres
+ */
+NoUnCompress::NoUnCompress(const char *data, char *buf, BlockContents *result, size_t n) :
+  BaseUnCompress(data, buf, result, n) {}
+
+NoUnCompress::~NoUnCompress() {}
+
+Status NoUnCompress::UnCompress() {/*{{{*/
+  if (data_ != buf_) {
+    // File implementation gave us pointer to some other data.
+    // Use it directly under the assumption that it will be live
+    // while the file is open.
+    delete[] buf_;
+    result_->data = Slice(data_, n_); // NOTE: htt, 从其他内存获取数据，比如mmap地址
+    result_->heap_allocated = false;
+    result_->cachable = false;  // Do not double-cache // NOTE:htt, 如果是mmap等缓存,则不用对Block进行再次缓存
+  } else {
+    result_->data = Slice(buf_, n_); // NOTE: htt, 使用 new buf[]空间
+    result_->heap_allocated = true;
+    result_->cachable = true;
+  }
+  return Status::OK();
+}/*}}}*/
+
+/**
+ * snappy uncompress
+ */
+SnappyUnCompress::SnappyUnCompress(const char *data, char *buf, BlockContents *result, size_t n) :
+  BaseUnCompress(data, buf, result, n) {}
+
+SnappyUnCompress::~SnappyUnCompress() {}
+
+Status SnappyUnCompress::UnCompress() {/*{{{*/
+  fprintf(stderr, "snappy decompression\n");
+  size_t ulength = 0;
+  if (!port::Snappy_GetUncompressedLength(data_, n_, &ulength)) {
+    delete[] buf_;
+    return Status::Corruption("corrupted compressed block contents");
+  }
+  char* ubuf = new char[ulength];
+  if (!port::Snappy_Uncompress(data_, n_, ubuf)) {
+    delete[] buf_;
+    delete[] ubuf;
+    return Status::Corruption("corrupted compressed block contents");
+  }
+  delete[] buf_;
+  result_->data = Slice(ubuf, ulength); // NOTE: htt, 有压缩情况，则直接使用新的内存空间
+  result_->heap_allocated = true;
+  result_->cachable = true;
+  return Status::OK();
+}/*}}}*/
+
+/**
+ * zstd uncompress
+ */
+ZstdUnCompress::ZstdUnCompress(const char *data, char *buf, BlockContents *result, size_t n) :
+  BaseUnCompress(data, buf, result, n) {}
+
+ZstdUnCompress::~ZstdUnCompress() {}
+
+Status ZstdUnCompress::UnCompress() {/*{{{*/
+  fprintf(stderr, "zstd decompression\n");
+  size_t ulength = 0;
+  if (!port::Zstd_GetUncompressedLength(data_, n_, &ulength)) {
+    delete[] buf_;
+    return Status::Corruption("corrupted compressed block contents");
+  }
+  char* ubuf = new char[ulength];
+  if (!port::Zstd_Uncompress(data_, n_, ubuf, &ulength)) { // NOTE:htt, ulength可能会变化
+    delete[] buf_;
+    delete[] ubuf;
+    return Status::Corruption("corrupted compressed block contents");
+  }
+  delete[] buf_;
+  result_->data = Slice(ubuf, ulength); // NOTE: htt, 有压缩情况，则直接使用新的内存空间
+  result_->heap_allocated = true;
+  result_->cachable = true;
+
+  return Status::OK();
+}/*}}}*/
+
+/**
+ * UnCompress Factory
+ */
+BaseUnCompress* UnCompressFactory::CreateUnCompress(
+    const char *data, char *buf, BlockContents *result, size_t n, CompressionType type) {
+  switch (type) {
+    case kNoCompression:
+      return new NoUnCompress(data, buf, result, n);
+    case kSnappyCompression:
+      return new SnappyUnCompress(data, buf, result, n);
+    case kZstdCompression:
+      return new ZstdUnCompress(data, buf, result, n);
+    default:
+      break;
+  }
+  // 默认不清楚解压缩机制则返回NULL
+  return NULL;
+}
+
 Status ReadBlock(RandomAccessFile* file,
                  const ReadOptions& options,
                  const BlockHandle& handle,
@@ -98,66 +211,81 @@ Status ReadBlock(RandomAccessFile* file,
     }
   }
 
-  switch (data[n]) {
-    case kNoCompression: // NOTE: htt, 无压缩
-      if (data != buf) {
-        // File implementation gave us pointer to some other data.
-        // Use it directly under the assumption that it will be live
-        // while the file is open.
-        delete[] buf;
-        result->data = Slice(data, n); // NOTE: htt, 从其他内存获取数据，比如mmap地址
-        result->heap_allocated = false;
-        result->cachable = false;  // Do not double-cache // NOTE:htt, 如果是mmap等缓存,则不用对Block进行再次缓存
-      } else {
-        result->data = Slice(buf, n); // NOTE: htt, 使用 new buf[]空间
-        result->heap_allocated = true;
-        result->cachable = true;
-      }
-
-      // Ok
-      break;
-    case kSnappyCompression: { // NOTE; htt, 有压缩
-      fprintf(stderr, "snappy decompression\n");
-      size_t ulength = 0;
-      if (!port::Snappy_GetUncompressedLength(data, n, &ulength)) {
-        delete[] buf;
-        return Status::Corruption("corrupted compressed block contents");
-      }
-      char* ubuf = new char[ulength];
-      if (!port::Snappy_Uncompress(data, n, ubuf)) {
-        delete[] buf;
-        delete[] ubuf;
-        return Status::Corruption("corrupted compressed block contents");
-      }
-      delete[] buf;
-      result->data = Slice(ubuf, ulength); // NOTE: htt, 有压缩情况，则直接使用新的内存空间
-      result->heap_allocated = true;
-      result->cachable = true;
-      break;
-    }
-    case kZstdCompression: { // NOTE; htt, 有压缩
-      fprintf(stderr, "zstd decompression\n");
-      size_t ulength = 0;
-      if (!port::Zstd_GetUncompressedLength(data, n, &ulength)) {
-        delete[] buf;
-        return Status::Corruption("corrupted compressed block contents");
-      }
-      char* ubuf = new char[ulength];
-      if (!port::Zstd_Uncompress(data, n, ubuf, &ulength)) { // NOTE:htt, ulength可能会变化
-        delete[] buf;
-        delete[] ubuf;
-        return Status::Corruption("corrupted compressed block contents");
-      }
-      delete[] buf;
-      result->data = Slice(ubuf, ulength); // NOTE: htt, 有压缩情况，则直接使用新的内存空间
-      result->heap_allocated = true;
-      result->cachable = true;
-      break;
-    }
-    default:
-      delete[] buf;
-      return Status::Corruption("bad block type");
+  // create compress class
+  BaseUnCompress* uncompress = UnCompressFactory::CreateUnCompress(data, buf, result, n, (CompressionType)data[n]);
+  if (uncompress == NULL) {
+    delete[] buf;
+    return Status::Corruption("create uncompress failed!");
   }
+
+  s = uncompress->UnCompress();
+  if (!s.ok()) {
+    delete uncompress;
+    return s;
+  }
+
+  delete uncompress;
+
+//  switch (data[n]) {/*{{{*/
+//    case kNoCompression: // NOTE: htt, 无压缩
+//      if (data != buf) {
+//        // File implementation gave us pointer to some other data.
+//        // Use it directly under the assumption that it will be live
+//        // while the file is open.
+//        delete[] buf;
+//        result->data = Slice(data, n); // NOTE: htt, 从其他内存获取数据，比如mmap地址
+//        result->heap_allocated = false;
+//        result->cachable = false;  // Do not double-cache // NOTE:htt, 如果是mmap等缓存,则不用对Block进行再次缓存
+//      } else {
+//        result->data = Slice(buf, n); // NOTE: htt, 使用 new buf[]空间
+//        result->heap_allocated = true;
+//        result->cachable = true;
+//      }
+//
+//      // Ok
+//      break;
+//    case kSnappyCompression: { // NOTE; htt, 有压缩
+//      fprintf(stderr, "snappy decompression\n");
+//      size_t ulength = 0;
+//      if (!port::Snappy_GetUncompressedLength(data, n, &ulength)) {
+//        delete[] buf;
+//        return Status::Corruption("corrupted compressed block contents");
+//      }
+//      char* ubuf = new char[ulength];
+//      if (!port::Snappy_Uncompress(data, n, ubuf)) {
+//        delete[] buf;
+//        delete[] ubuf;
+//        return Status::Corruption("corrupted compressed block contents");
+//      }
+//      delete[] buf;
+//      result->data = Slice(ubuf, ulength); // NOTE: htt, 有压缩情况，则直接使用新的内存空间
+//      result->heap_allocated = true;
+//      result->cachable = true;
+//      break;
+//    }
+//    case kZstdCompression: { // NOTE; htt, 有压缩
+//      fprintf(stderr, "zstd decompression\n");
+//      size_t ulength = 0;
+//      if (!port::Zstd_GetUncompressedLength(data, n, &ulength)) {
+//        delete[] buf;
+//        return Status::Corruption("corrupted compressed block contents");
+//      }
+//      char* ubuf = new char[ulength];
+//      if (!port::Zstd_Uncompress(data, n, ubuf, &ulength)) { // NOTE:htt, ulength可能会变化
+//        delete[] buf;
+//        delete[] ubuf;
+//        return Status::Corruption("corrupted compressed block contents");
+//      }
+//      delete[] buf;
+//      result->data = Slice(ubuf, ulength); // NOTE: htt, 有压缩情况，则直接使用新的内存空间
+//      result->heap_allocated = true;
+//      result->cachable = true;
+//      break;
+//    }
+//    default:
+//      delete[] buf;
+//      return Status::Corruption("bad block type");
+//  }/*}}}*/
 
   return Status::OK();
 }
