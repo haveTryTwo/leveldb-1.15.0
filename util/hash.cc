@@ -2,20 +2,22 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
 
+#include "util/hash.h"
 #include <string.h>
 #include "util/coding.h"
-#include "util/hash.h"
 
 // The FALLTHROUGH_INTENDED macro can be used to annotate implicit fall-through
 // between switch labels. The real definition should be provided externally.
 // This one is a fallback version for unsupported compilers.
 #ifndef FALLTHROUGH_INTENDED
-#define FALLTHROUGH_INTENDED do { } while (0)
+#define FALLTHROUGH_INTENDED \
+  do {                       \
+  } while (0)
 #endif
 
 namespace leveldb {
 
-uint32_t Hash(const char* data, size_t n, uint32_t seed) { // NOTE: htt, murmur hash 相同的hash
+uint32_t Hash(const char* data, size_t n, uint32_t seed) {  // NOTE: htt, murmur hash 相同的hash
   // Similar to murmur hash
   const uint32_t m = 0xc6a4a793;
   const uint32_t r = 24;
@@ -32,13 +34,13 @@ uint32_t Hash(const char* data, size_t n, uint32_t seed) { // NOTE: htt, murmur 
   }
 
   // Pick up remaining bytes
-  switch (limit - data) { // NOTE: htt, 单独处理4字节的内容
+  switch (limit - data) {  // NOTE: htt, 单独处理4字节的内容
     case 3:
       h += data[2] << 16;
-      FALLTHROUGH_INTENDED; // NOTE: htt, 继续 data[1], data[0]
+      FALLTHROUGH_INTENDED;  // NOTE: htt, 继续 data[1], data[0]
     case 2:
       h += data[1] << 8;
-      FALLTHROUGH_INTENDED; // NOTE: htt, 继续 data[0]
+      FALLTHROUGH_INTENDED;  // NOTE: htt, 继续 data[0]
     case 1:
       h += data[0];
       h *= m;
@@ -47,6 +49,5 @@ uint32_t Hash(const char* data, size_t n, uint32_t seed) { // NOTE: htt, murmur 
   }
   return h;
 }
-
 
 }  // namespace leveldb

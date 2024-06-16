@@ -7,8 +7,8 @@
 #ifndef STORAGE_LEVELDB_DB_TABLE_CACHE_H_
 #define STORAGE_LEVELDB_DB_TABLE_CACHE_H_
 
-#include <string>
 #include <stdint.h>
+#include <string>
 #include "db/dbformat.h"
 #include "leveldb/cache.h"
 #include "leveldb/table.h"
@@ -18,7 +18,8 @@ namespace leveldb {
 
 class Env;
 
-class TableCache { // NOTE:htt, 读取file_number对应文件, 并缓存{ sst_file_numbe, {file, sst_talbe} }
+class TableCache {  // NOTE:htt, 读取file_number对应文件, 并缓存{ sst_file_numbe, {file, sst_talbe}
+                    // }
  public:
   TableCache(const std::string& dbname, const Options* options, int entries);
   ~TableCache();
@@ -30,28 +31,21 @@ class TableCache { // NOTE:htt, 读取file_number对应文件, 并缓存{ sst_fi
   // the returned iterator.  The returned "*tableptr" object is owned by
   // the cache and should not be deleted, and is valid for as long as the
   // returned iterator is live.
-  Iterator* NewIterator(const ReadOptions& options,
-                        uint64_t file_number,
-                        uint64_t file_size,
-                        Table** tableptr = NULL);
+  Iterator* NewIterator(const ReadOptions& options, uint64_t file_number, uint64_t file_size, Table** tableptr = NULL);
 
   // If a seek to internal key "k" in specified file finds an entry,
   // call (*handle_result)(arg, found_key, found_value).
-  Status Get(const ReadOptions& options,
-             uint64_t file_number,
-             uint64_t file_size,
-             const Slice& k,
-             void* arg,
+  Status Get(const ReadOptions& options, uint64_t file_number, uint64_t file_size, const Slice& k, void* arg,
              void (*handle_result)(void*, const Slice&, const Slice&));
 
   // Evict any entry for the specified file number
   void Evict(uint64_t file_number);
 
  private:
-  Env* const env_; // NOTE:htt, 环境
-  const std::string dbname_; // NOTE:htt, db名称
+  Env* const env_;            // NOTE:htt, 环境
+  const std::string dbname_;  // NOTE:htt, db名称
   const Options* options_;
-  Cache* cache_; // NOTE:htt, ShardedLRUCache, 即分片LRUCache
+  Cache* cache_;  // NOTE:htt, ShardedLRUCache, 即分片LRUCache
 
   Status FindTable(uint64_t file_number, uint64_t file_size, Cache::Handle**);
 };

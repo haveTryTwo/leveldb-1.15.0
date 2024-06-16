@@ -4,10 +4,10 @@
 
 #include "util/testharness.h"
 
-#include <string>
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <string>
 
 namespace leveldb {
 namespace test {
@@ -19,7 +19,7 @@ struct Test {
   void (*func)();
 };
 std::vector<Test>* tests;
-}
+}  // namespace
 
 bool RegisterTest(const char* base, const char* name, void (*func)()) {
   if (tests == NULL) {

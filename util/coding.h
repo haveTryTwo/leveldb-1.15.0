@@ -35,8 +35,8 @@ extern bool GetLengthPrefixedSlice(Slice* input, Slice* result);
 // in *v and return a pointer just past the parsed value, or return
 // NULL on error.  These routines only look at bytes in the range
 // [p..limit-1]
-extern const char* GetVarint32Ptr(const char* p,const char* limit, uint32_t* v);
-extern const char* GetVarint64Ptr(const char* p,const char* limit, uint64_t* v);
+extern const char* GetVarint32Ptr(const char* p, const char* limit, uint32_t* v);
+extern const char* GetVarint64Ptr(const char* p, const char* limit, uint64_t* v);
 
 // Returns the length of the varint32 or varint64 encoding of "v"
 extern int VarintLength(uint64_t v);
@@ -55,43 +55,40 @@ extern char* EncodeVarint64(char* dst, uint64_t value);
 // Lower-level versions of Get... that read directly from a character buffer
 // without any bounds checking.
 
-inline uint32_t DecodeFixed32(const char* ptr) { // NOTE: htt, 解析固定int类型
+inline uint32_t DecodeFixed32(const char* ptr) {  // NOTE: htt, 解析固定int类型
   if (port::kLittleEndian) {
     // Load the raw bytes
     uint32_t result;
     memcpy(&result, ptr, sizeof(result));  // gcc optimizes this to a plain load
-    return result; // NOTE: htt, 小端模式，直接复制字符串到数字中，然后小端解析
+    return result;  // NOTE: htt, 小端模式，直接复制字符串到数字中，然后小端解析
   } else {
-    return ((static_cast<uint32_t>(static_cast<unsigned char>(ptr[0])))
-        | (static_cast<uint32_t>(static_cast<unsigned char>(ptr[1])) << 8)
-        | (static_cast<uint32_t>(static_cast<unsigned char>(ptr[2])) << 16)
-        | (static_cast<uint32_t>(static_cast<unsigned char>(ptr[3])) << 24)); // NOTE: htt, 大端再专门处理
+    return ((static_cast<uint32_t>(static_cast<unsigned char>(ptr[0]))) |
+            (static_cast<uint32_t>(static_cast<unsigned char>(ptr[1])) << 8) |
+            (static_cast<uint32_t>(static_cast<unsigned char>(ptr[2])) << 16) |
+            (static_cast<uint32_t>(static_cast<unsigned char>(ptr[3])) << 24));  // NOTE: htt, 大端再专门处理
   }
 }
 
-inline uint64_t DecodeFixed64(const char* ptr) { // NOTE: htt, 解析固定int64类型
+inline uint64_t DecodeFixed64(const char* ptr) {  // NOTE: htt, 解析固定int64类型
   if (port::kLittleEndian) {
     // Load the raw bytes
     uint64_t result;
     memcpy(&result, ptr, sizeof(result));  // gcc optimizes this to a plain load
-    return result; // NOTE: htt, 小端模式，直接复制字符串到数据，然后小端解析
+    return result;  // NOTE: htt, 小端模式，直接复制字符串到数据，然后小端解析
   } else {
     uint64_t lo = DecodeFixed32(ptr);
-    uint64_t hi = DecodeFixed32(ptr + 4); // NOTE: htt, 大端模式专门处理i
+    uint64_t hi = DecodeFixed32(ptr + 4);  // NOTE: htt, 大端模式专门处理i
     return (hi << 32) | lo;
   }
 }
 
 // Internal routine for use by fallback path of GetVarint32Ptr
-extern const char* GetVarint32PtrFallback(const char* p,
-                                          const char* limit,
-                                          uint32_t* value);
-inline const char* GetVarint32Ptr(const char* p,
-                                  const char* limit,
-                                  uint32_t* value) { // NOTE: htt, 将整数内容复制到 value，并递增p指针的位置
+extern const char* GetVarint32PtrFallback(const char* p, const char* limit, uint32_t* value);
+inline const char* GetVarint32Ptr(const char* p, const char* limit,
+                                  uint32_t* value) {  // NOTE: htt, 将整数内容复制到 value，并递增p指针的位置
   if (p < limit) {
     uint32_t result = *(reinterpret_cast<const unsigned char*>(p));
-    if ((result & 128) == 0) { // NOTE: htt, 高位为0，则已经是可变int最后一个字节
+    if ((result & 128) == 0) {  // NOTE: htt, 高位为0，则已经是可变int最后一个字节
       *value = result;
       return p + 1;
     }

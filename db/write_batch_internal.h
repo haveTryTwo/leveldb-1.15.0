@@ -13,7 +13,7 @@ class MemTable;
 
 // WriteBatchInternal provides static methods for manipulating a
 // WriteBatch that we don't want in the public WriteBatch interface.
-class WriteBatchInternal { // NOTE:htt, 实现对WriteBatch批量写记录的操作
+class WriteBatchInternal {  // NOTE:htt, 实现对WriteBatch批量写记录的操作
  public:
   // Return the number of entries in the batch.
   static int Count(const WriteBatch* batch);
@@ -28,11 +28,11 @@ class WriteBatchInternal { // NOTE:htt, 实现对WriteBatch批量写记录的操
   // this batch.
   static void SetSequence(WriteBatch* batch, SequenceNumber seq);
 
-  static Slice Contents(const WriteBatch* batch) { // NOTE:htt, 获取批量写内容
+  static Slice Contents(const WriteBatch* batch) {  // NOTE:htt, 获取批量写内容
     return Slice(batch->rep_);
   }
 
-  static size_t ByteSize(const WriteBatch* batch) { // NOTE:htt, 获取批量写字符串大小
+  static size_t ByteSize(const WriteBatch* batch) {  // NOTE:htt, 获取批量写字符串大小
     return batch->rep_.size();
   }
 
@@ -44,6 +44,5 @@ class WriteBatchInternal { // NOTE:htt, 实现对WriteBatch批量写记录的操
 };
 
 }  // namespace leveldb
-
 
 #endif  // STORAGE_LEVELDB_DB_WRITE_BATCH_INTERNAL_H_

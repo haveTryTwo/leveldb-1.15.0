@@ -52,14 +52,14 @@ namespace port {
 
 // Mac OS
 #elif defined(OS_MACOSX)
-inline void MemoryBarrier() { // NOTE: htt, 内存屏障
+inline void MemoryBarrier() {  // NOTE: htt, 内存屏障
   OSMemoryBarrier();
 }
 #define LEVELDB_HAVE_MEMORY_BARRIER
 
 // Gcc on x86
 #elif defined(ARCH_CPU_X86_FAMILY) && defined(__GNUC__)
-inline void MemoryBarrier() { // NOTE: htt, 内存屏障
+inline void MemoryBarrier() {  // NOTE: htt, 内存屏障
   // See http://gcc.gnu.org/ml/gcc/2003-04/msg01180.html for a discussion on
   // this idiom. Also see http://en.wikipedia.org/wiki/Memory_ordering.
   __asm__ __volatile__("" : : : "memory");
@@ -68,7 +68,7 @@ inline void MemoryBarrier() { // NOTE: htt, 内存屏障
 
 // Sun Studio
 #elif defined(ARCH_CPU_X86_FAMILY) && defined(__SUNPRO_CC)
-inline void MemoryBarrier() { // NOTE: htt, 内存屏障
+inline void MemoryBarrier() {  // NOTE: htt, 内存屏障
   // See http://gcc.gnu.org/ml/gcc/2003-04/msg01180.html for a discussion on
   // this idiom. Also see http://en.wikipedia.org/wiki/Memory_ordering.
   asm volatile("" : : : "memory");
@@ -88,14 +88,14 @@ typedef void (*LinuxKernelMemoryBarrierFunc)(void);
 // shows that the extra function call cost is completely negligible on
 // multi-core devices.
 //
-inline void MemoryBarrier() { // NOTE: htt, 内存屏障
+inline void MemoryBarrier() {  // NOTE: htt, 内存屏障
   (*(LinuxKernelMemoryBarrierFunc)0xffff0fa0)();
 }
 #define LEVELDB_HAVE_MEMORY_BARRIER
 
 // PPC
 #elif defined(ARCH_CPU_PPC_FAMILY) && defined(__GNUC__)
-inline void MemoryBarrier() { // NOTE: htt, 内存屏障
+inline void MemoryBarrier() {  // NOTE: htt, 内存屏障
   // TODO for some powerpc expert: is there a cheaper suitable variant?
   // Perhaps by having separate barriers for acquire and release ops.
   asm volatile("sync" : : : "memory");
@@ -106,21 +106,22 @@ inline void MemoryBarrier() { // NOTE: htt, 内存屏障
 
 // AtomicPointer built using platform-specific MemoryBarrier()
 #if defined(LEVELDB_HAVE_MEMORY_BARRIER)
-class AtomicPointer { // NOTE:htt, 采用内存屏障来读写数据
+class AtomicPointer {  // NOTE:htt, 采用内存屏障来读写数据
  private:
   void* rep_;
+
  public:
-  AtomicPointer() { }
+  AtomicPointer() {}
   explicit AtomicPointer(void* p) : rep_(p) {}
   inline void* NoBarrier_Load() const { return rep_; }
   inline void NoBarrier_Store(void* v) { rep_ = v; }
-  inline void* Acquire_Load() const { // NOTE: htt, 带内存屏障读取
+  inline void* Acquire_Load() const {  // NOTE: htt, 带内存屏障读取
     void* result = rep_;
-    MemoryBarrier(); // NOTE: htt, 保证之前的内存可见
+    MemoryBarrier();  // NOTE: htt, 保证之前的内存可见
     return result;
   }
-  inline void Release_Store(void* v) { // NOTE:htt, 带内存屏障写入
-    MemoryBarrier(); // NOTE: htt, 保证之前内容可见
+  inline void Release_Store(void* v) {  // NOTE:htt, 带内存屏障写入
+    MemoryBarrier();                    // NOTE: htt, 保证之前内容可见
     rep_ = v;
   }
 };
@@ -130,21 +131,22 @@ class AtomicPointer { // NOTE:htt, 采用内存屏障来读写数据
 class AtomicPointer {
  private:
   std::atomic<void*> rep_;
+
  public:
-  AtomicPointer() { }
-  explicit AtomicPointer(void* v) : rep_(v) { }
-  inline void* Acquire_Load() const {
-    return rep_.load(std::memory_order_acquire);
-  }
+  AtomicPointer() {}
+  explicit AtomicPointer(void* v) : rep_(v) {}
+  inline void* Acquire_Load() const { return rep_.load(std::memory_order_acquire); }
   inline void Release_Store(void* v) {
-    rep_.store(v, std::memory_order_release); // NOTE: htt,在本线程中，所有之前的针对该变量的内存操作完成后才能执行本条原子操作 
+    rep_.store(v,
+               std::memory_order_release);  // NOTE:
+                                            // htt,在本线程中，所有之前的针对该变量的内存操作完成后才能执行本条原子操作
   }
   inline void* NoBarrier_Load() const {
-    return rep_.load(std::memory_order_relaxed); // NOTE: htt, 本线程中，所有后续的关于此变量的内存操作都必须在本条原子操作完成后执行
+    return rep_.load(
+        std::memory_order_relaxed);  // NOTE: htt,
+                                     // 本线程中，所有后续的关于此变量的内存操作都必须在本条原子操作完成后执行
   }
-  inline void NoBarrier_Store(void* v) {
-    rep_.store(v, std::memory_order_relaxed);
-  }
+  inline void NoBarrier_Store(void* v) { rep_.store(v, std::memory_order_relaxed); }
 };
 
 // Atomic pointer based on sparc memory barriers
@@ -152,26 +154,27 @@ class AtomicPointer {
 class AtomicPointer {
  private:
   void* rep_;
+
  public:
-  AtomicPointer() { }
-  explicit AtomicPointer(void* v) : rep_(v) { }
+  AtomicPointer() {}
+  explicit AtomicPointer(void* v) : rep_(v) {}
   inline void* Acquire_Load() const {
     void* val;
-    __asm__ __volatile__ (
+    __asm__ __volatile__(
         "ldx [%[rep_]], %[val] \n\t"
-         "membar #LoadLoad|#LoadStore \n\t"
-        : [val] "=r" (val)
-        : [rep_] "r" (&rep_)
+        "membar #LoadLoad|#LoadStore \n\t"
+        : [val] "=r"(val)
+        : [rep_] "r"(&rep_)
         : "memory");
-    return val; // NOTE: htt, 带内存屏障读
+    return val;  // NOTE: htt, 带内存屏障读
   }
   inline void Release_Store(void* v) {
-    __asm__ __volatile__ (
+    __asm__ __volatile__(
         "membar #LoadStore|#StoreStore \n\t"
         "stx %[v], [%[rep_]] \n\t"
         :
-        : [rep_] "r" (&rep_), [v] "r" (v)
-        : "memory"); // NOTE: htt, 带内存屏障写
+        : [rep_] "r"(&rep_), [v] "r"(v)
+        : "memory");  // NOTE: htt, 带内存屏障写
   }
   inline void* NoBarrier_Load() const { return rep_; }
   inline void NoBarrier_Store(void* v) { rep_ = v; }
@@ -182,26 +185,20 @@ class AtomicPointer {
 class AtomicPointer {
  private:
   void* rep_;
+
  public:
-  AtomicPointer() { }
-  explicit AtomicPointer(void* v) : rep_(v) { }
+  AtomicPointer() {}
+  explicit AtomicPointer(void* v) : rep_(v) {}
   inline void* Acquire_Load() const {
-    void* val    ;
-    __asm__ __volatile__ (
-        "ld8.acq %[val] = [%[rep_]] \n\t"
-        : [val] "=r" (val)
-        : [rep_] "r" (&rep_)
-        : "memory"
-        );
-    return val; // NOTE: htt, 带内存屏障读
+    void* val;
+    __asm__ __volatile__("ld8.acq %[val] = [%[rep_]] \n\t" : [val] "=r"(val) : [rep_] "r"(&rep_) : "memory");
+    return val;  // NOTE: htt, 带内存屏障读
   }
   inline void Release_Store(void* v) {
-    __asm__ __volatile__ (
-        "st8.rel [%[rep_]] = %[v]  \n\t"
-        :
-        : [rep_] "r" (&rep_), [v] "r" (v)
-        : "memory"
-        ); // NOTE: htt, 带内存屏障读
+    __asm__ __volatile__("st8.rel [%[rep_]] = %[v]  \n\t"
+                         :
+                         : [rep_] "r"(&rep_), [v] "r"(v)
+                         : "memory");  // NOTE: htt, 带内存屏障读
   }
   inline void* NoBarrier_Load() const { return rep_; }
   inline void NoBarrier_Store(void* v) { rep_ = v; }

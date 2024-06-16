@@ -14,7 +14,7 @@ namespace leveldb {
 
 struct Options;
 
-class BlockBuilder { // NOTE: htt, 生成block, 不断添加<key,value>,并根据需要调整restart[]数组偏移
+class BlockBuilder {  // NOTE: htt, 生成block, 不断添加<key,value>,并根据需要调整restart[]数组偏移
  public:
   explicit BlockBuilder(const Options* options);
 
@@ -35,17 +35,15 @@ class BlockBuilder { // NOTE: htt, 生成block, 不断添加<key,value>,并根�
   size_t CurrentSizeEstimate() const;
 
   // Return true iff no entries have been added since the last Reset()
-  bool empty() const {
-    return buffer_.empty();
-  }
+  bool empty() const { return buffer_.empty(); }
 
  private:
-  const Options*        options_;
-  std::string           buffer_;      // Destination buffer // NOTE: htt, 保存block内容的buffer
-  std::vector<uint32_t> restarts_;    // Restart points // NOTE: htt, restart[]保存的records的偏移
-  int                   counter_;     // Number of entries emitted since restart // NOTE: htt, 从restart开始对应records个数
-  bool                  finished_;    // Has Finish() been called? // NOTE: htt, block是否已完成
-  std::string           last_key_;    // NOTE: htt, 添加到buffer中的最后一个key,用于实现和新增key的共享长度判断
+  const Options* options_;
+  std::string buffer_;              // Destination buffer // NOTE: htt, 保存block内容的buffer
+  std::vector<uint32_t> restarts_;  // Restart points // NOTE: htt, restart[]保存的records的偏移
+  int counter_;           // Number of entries emitted since restart // NOTE: htt, 从restart开始对应records个数
+  bool finished_;         // Has Finish() been called? // NOTE: htt, block是否已完成
+  std::string last_key_;  // NOTE: htt, 添加到buffer中的最后一个key,用于实现和新增key的共享长度判断
 
   // No copying allowed
   BlockBuilder(const BlockBuilder&);

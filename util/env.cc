@@ -6,36 +6,30 @@
 
 namespace leveldb {
 
-Env::~Env() {
-}
+Env::~Env() {}
 
-SequentialFile::~SequentialFile() {
-}
+SequentialFile::~SequentialFile() {}
 
-RandomAccessFile::~RandomAccessFile() {
-}
+RandomAccessFile::~RandomAccessFile() {}
 
-WritableFile::~WritableFile() {
-}
+WritableFile::~WritableFile() {}
 
-Logger::~Logger() {
-}
+Logger::~Logger() {}
 
-FileLock::~FileLock() {
-}
+FileLock::~FileLock() {}
 
-void Log(Logger* info_log, const char* format, ...) { // NOTE: htt, 打印日志
+void Log(Logger* info_log, const char* format, ...) {  // NOTE: htt, 打印日志
   if (info_log != NULL) {
     va_list ap;
     va_start(ap, format);
-    info_log->Logv(format, ap); // NOTE: htt, 打印日志
+    info_log->Logv(format, ap);  // NOTE: htt, 打印日志
     va_end(ap);
   }
 }
 
-static Status DoWriteStringToFile(Env* env, const Slice& data,
-                                  const std::string& fname,
-                                  bool should_sync) { // NOTE:htt, 将data写入 fname新文件中,并根据sync来判断是否同步数据
+static Status DoWriteStringToFile(
+    Env* env, const Slice& data, const std::string& fname,
+    bool should_sync) {  // NOTE:htt, 将data写入 fname新文件中,并根据sync来判断是否同步数据
   WritableFile* file;
   Status s = env->NewWritableFile(fname, &file);
   if (!s.ok()) {
@@ -43,32 +37,31 @@ static Status DoWriteStringToFile(Env* env, const Slice& data,
   }
   s = file->Append(data);
   if (s.ok() && should_sync) {
-    s = file->Sync(); // NOTE: htt, 如果刷盘则Sync()
+    s = file->Sync();  // NOTE: htt, 如果刷盘则Sync()
   }
   if (s.ok()) {
-    s = file->Close(); // NOTE: htt, close()文件会带来刷盘操作?
+    s = file->Close();  // NOTE: htt, close()文件会带来刷盘操作?
   }
   delete file;  // Will auto-close if we did not close above
   if (!s.ok()) {
-    env->DeleteFile(fname); // NOTE: htt, 出现失败则删除文件 TODO: htt, 是否考虑文件已有数据等情况
+    env->DeleteFile(fname);  // NOTE: htt, 出现失败则删除文件 TODO: htt, 是否考虑文件已有数据等情况
   }
   return s;
 }
 
-Status WriteStringToFile(Env* env, const Slice& data,
-                         const std::string& fname) {
+Status WriteStringToFile(Env* env, const Slice& data, const std::string& fname) {
   return DoWriteStringToFile(env, data, fname, false);
 }
 
-Status WriteStringToFileSync(Env* env, const Slice& data,
-                             const std::string& fname) {
-  return DoWriteStringToFile(env, data, fname, true); // NOTE: htt, 待刷盘写
+Status WriteStringToFileSync(Env* env, const Slice& data, const std::string& fname) {
+  return DoWriteStringToFile(env, data, fname, true);  // NOTE: htt, 待刷盘写
 }
 
-Status ReadFileToString(Env* env, const std::string& fname, std::string* data) { // NOTE: htt, 读取文件内容到data中
+Status ReadFileToString(Env* env, const std::string& fname,
+                        std::string* data) {  // NOTE: htt, 读取文件内容到data中
   data->clear();
   SequentialFile* file;
-  Status s = env->NewSequentialFile(fname, &file); // NOTE: htt, 创建顺序读取文件
+  Status s = env->NewSequentialFile(fname, &file);  // NOTE: htt, 创建顺序读取文件
   if (!s.ok()) {
     return s;
   }
@@ -81,7 +74,7 @@ Status ReadFileToString(Env* env, const std::string& fname, std::string* data) {
       break;
     }
     data->append(fragment.data(), fragment.size());
-    if (fragment.empty()) { // NOTE: htt, 读取完成
+    if (fragment.empty()) {  // NOTE: htt, 读取完成
       break;
     }
   }
@@ -90,7 +83,6 @@ Status ReadFileToString(Env* env, const std::string& fname, std::string* data) {
   return s;
 }
 
-EnvWrapper::~EnvWrapper() {
-}
+EnvWrapper::~EnvWrapper() {}
 
 }  // namespace leveldb

@@ -17,14 +17,14 @@ namespace leveldb {
 
 class Env;
 
-enum FileType { // NOTE:htt, leveldb日志文件类型
-  kLogFile, // NOTE:htt, WAL日志文件
-  kDBLockFile, // NOTE:htt, LOCK文件
-  kTableFile, // NOTE:htt, sst或ldb文件
-  kDescriptorFile, // NOTE:htt, MANIFEST-* 文件
-  kCurrentFile, // NOTE:htt, CURRENT 文件
-  kTempFile, // NOTE:htt, dbtmp文件
-  kInfoLogFile  // Either the current one, or an old one // NOTE:htt, 日志
+enum FileType {     // NOTE:htt, leveldb日志文件类型
+  kLogFile,         // NOTE:htt, WAL日志文件
+  kDBLockFile,      // NOTE:htt, LOCK文件
+  kTableFile,       // NOTE:htt, sst或ldb文件
+  kDescriptorFile,  // NOTE:htt, MANIFEST-* 文件
+  kCurrentFile,     // NOTE:htt, CURRENT 文件
+  kTempFile,        // NOTE:htt, dbtmp文件
+  kInfoLogFile      // Either the current one, or an old one // NOTE:htt, 日志
 };
 
 // Return the name of the log file with the specified number
@@ -45,8 +45,7 @@ extern std::string SSTTableFileName(const std::string& dbname, uint64_t number);
 // Return the name of the descriptor file for the db named by
 // "dbname" and the specified incarnation number.  The result will be
 // prefixed with "dbname".
-extern std::string DescriptorFileName(const std::string& dbname,
-                                      uint64_t number);
+extern std::string DescriptorFileName(const std::string& dbname, uint64_t number);
 
 // Return the name of the current file.  This file contains the name
 // of the current manifest file.  The result will be prefixed with
@@ -70,15 +69,11 @@ extern std::string OldInfoLogFileName(const std::string& dbname);
 // If filename is a leveldb file, store the type of the file in *type.
 // The number encoded in the filename is stored in *number.  If the
 // filename was successfully parsed, returns true.  Else return false.
-extern bool ParseFileName(const std::string& filename,
-                          uint64_t* number,
-                          FileType* type);
+extern bool ParseFileName(const std::string& filename, uint64_t* number, FileType* type);
 
 // Make the CURRENT file point to the descriptor file with the
 // specified number.
-extern Status SetCurrentFile(Env* env, const std::string& dbname,
-                             uint64_t descriptor_number);
-
+extern Status SetCurrentFile(Env* env, const std::string& dbname, uint64_t descriptor_number);
 
 }  // namespace leveldb
 

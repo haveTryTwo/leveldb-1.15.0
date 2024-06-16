@@ -14,7 +14,7 @@ class FindFileTest {
   std::vector<FileMetaData*> files_;
   bool disjoint_sorted_files_;
 
-  FindFileTest() : disjoint_sorted_files_(true) { }
+  FindFileTest() : disjoint_sorted_files_(true) {}
 
   ~FindFileTest() {
     for (int i = 0; i < files_.size(); i++) {
@@ -22,8 +22,7 @@ class FindFileTest {
     }
   }
 
-  void Add(const char* smallest, const char* largest,
-           SequenceNumber smallest_seq = 100,
+  void Add(const char* smallest, const char* largest, SequenceNumber smallest_seq = 100,
            SequenceNumber largest_seq = 100) {
     FileMetaData* f = new FileMetaData;
     f->number = files_.size() + 1;
@@ -42,18 +41,17 @@ class FindFileTest {
     InternalKeyComparator cmp(BytewiseComparator());
     Slice s(smallest != NULL ? smallest : "");
     Slice l(largest != NULL ? largest : "");
-    return SomeFileOverlapsRange(cmp, disjoint_sorted_files_, files_,
-                                 (smallest != NULL ? &s : NULL),
+    return SomeFileOverlapsRange(cmp, disjoint_sorted_files_, files_, (smallest != NULL ? &s : NULL),
                                  (largest != NULL ? &l : NULL));
   }
 };
 
 TEST(FindFileTest, Empty) {
   ASSERT_EQ(0, Find("foo"));
-  ASSERT_TRUE(! Overlaps("a", "z"));
-  ASSERT_TRUE(! Overlaps(NULL, "z"));
-  ASSERT_TRUE(! Overlaps("a", NULL));
-  ASSERT_TRUE(! Overlaps(NULL, NULL));
+  ASSERT_TRUE(!Overlaps("a", "z"));
+  ASSERT_TRUE(!Overlaps(NULL, "z"));
+  ASSERT_TRUE(!Overlaps("a", NULL));
+  ASSERT_TRUE(!Overlaps(NULL, NULL));
 }
 
 TEST(FindFileTest, Single) {
@@ -65,8 +63,8 @@ TEST(FindFileTest, Single) {
   ASSERT_EQ(1, Find("q1"));
   ASSERT_EQ(1, Find("z"));
 
-  ASSERT_TRUE(! Overlaps("a", "b"));
-  ASSERT_TRUE(! Overlaps("z1", "z2"));
+  ASSERT_TRUE(!Overlaps("a", "b"));
+  ASSERT_TRUE(!Overlaps("z1", "z2"));
   ASSERT_TRUE(Overlaps("a", "p"));
   ASSERT_TRUE(Overlaps("a", "q"));
   ASSERT_TRUE(Overlaps("a", "z"));
@@ -78,14 +76,13 @@ TEST(FindFileTest, Single) {
   ASSERT_TRUE(Overlaps("q", "q"));
   ASSERT_TRUE(Overlaps("q", "q1"));
 
-  ASSERT_TRUE(! Overlaps(NULL, "j"));
-  ASSERT_TRUE(! Overlaps("r", NULL));
+  ASSERT_TRUE(!Overlaps(NULL, "j"));
+  ASSERT_TRUE(!Overlaps("r", NULL));
   ASSERT_TRUE(Overlaps(NULL, "p"));
   ASSERT_TRUE(Overlaps(NULL, "p1"));
   ASSERT_TRUE(Overlaps("q", NULL));
   ASSERT_TRUE(Overlaps(NULL, NULL));
 }
-
 
 TEST(FindFileTest, Multiple) {
   Add("150", "200");
@@ -110,10 +107,10 @@ TEST(FindFileTest, Multiple) {
   ASSERT_EQ(3, Find("450"));
   ASSERT_EQ(4, Find("451"));
 
-  ASSERT_TRUE(! Overlaps("100", "149"));
-  ASSERT_TRUE(! Overlaps("251", "299"));
-  ASSERT_TRUE(! Overlaps("451", "500"));
-  ASSERT_TRUE(! Overlaps("351", "399"));
+  ASSERT_TRUE(!Overlaps("100", "149"));
+  ASSERT_TRUE(!Overlaps("251", "299"));
+  ASSERT_TRUE(!Overlaps("451", "500"));
+  ASSERT_TRUE(!Overlaps("351", "399"));
 
   ASSERT_TRUE(Overlaps("100", "150"));
   ASSERT_TRUE(Overlaps("100", "200"));
@@ -130,8 +127,8 @@ TEST(FindFileTest, MultipleNullBoundaries) {
   Add("200", "250");
   Add("300", "350");
   Add("400", "450");
-  ASSERT_TRUE(! Overlaps(NULL, "149"));
-  ASSERT_TRUE(! Overlaps("451", NULL));
+  ASSERT_TRUE(!Overlaps(NULL, "149"));
+  ASSERT_TRUE(!Overlaps("451", NULL));
   ASSERT_TRUE(Overlaps(NULL, NULL));
   ASSERT_TRUE(Overlaps(NULL, "150"));
   ASSERT_TRUE(Overlaps(NULL, "199"));
@@ -147,8 +144,8 @@ TEST(FindFileTest, MultipleNullBoundaries) {
 
 TEST(FindFileTest, OverlapSequenceChecks) {
   Add("200", "200", 5000, 3000);
-  ASSERT_TRUE(! Overlaps("199", "199"));
-  ASSERT_TRUE(! Overlaps("201", "300"));
+  ASSERT_TRUE(!Overlaps("199", "199"));
+  ASSERT_TRUE(!Overlaps("201", "300"));
   ASSERT_TRUE(Overlaps("200", "200"));
   ASSERT_TRUE(Overlaps("190", "200"));
   ASSERT_TRUE(Overlaps("200", "210"));
@@ -158,8 +155,8 @@ TEST(FindFileTest, OverlappingFiles) {
   Add("150", "600");
   Add("400", "500");
   disjoint_sorted_files_ = false;
-  ASSERT_TRUE(! Overlaps("100", "149"));
-  ASSERT_TRUE(! Overlaps("601", "700"));
+  ASSERT_TRUE(!Overlaps("100", "149"));
+  ASSERT_TRUE(!Overlaps("601", "700"));
   ASSERT_TRUE(Overlaps("100", "150"));
   ASSERT_TRUE(Overlaps("100", "200"));
   ASSERT_TRUE(Overlaps("100", "300"));
@@ -174,6 +171,4 @@ TEST(FindFileTest, OverlappingFiles) {
 
 }  // namespace leveldb
 
-int main(int argc, char** argv) {
-  return leveldb::test::RunAllTests();
-}
+int main(int argc, char** argv) { return leveldb::test::RunAllTests(); }

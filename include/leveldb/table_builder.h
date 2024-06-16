@@ -23,7 +23,8 @@ class BlockBuilder;
 class BlockHandle;
 class WritableFile;
 
-class TableBuilder { // NOTE:htt, 完成整个sstable写入,包括{data block列表, meta block, meta index block, index block, footer} 写入
+class TableBuilder {  // NOTE:htt, 完成整个sstable写入,包括{data block列表, meta block, meta index
+                      // block, index block, footer} 写入
  public:
   // Create a builder that will store the contents of the table it is
   // building in *file.  Does not close the file.  It is up to the
@@ -75,7 +76,7 @@ class TableBuilder { // NOTE:htt, 完成整个sstable写入,包括{data block列
   uint64_t FileSize() const;
 
  private:
-  bool ok() const { return status().ok(); } // NOTE:htt, 写入的状态
+  bool ok() const { return status().ok(); }  // NOTE:htt, 写入的状态
   void WriteBlock(BlockBuilder* block, BlockHandle* handle);
   void WriteRawBlock(const Slice& data, CompressionType, BlockHandle* handle);
 
@@ -86,51 +87,53 @@ class TableBuilder { // NOTE:htt, 完成整个sstable写入,包括{data block列
   TableBuilder(const TableBuilder&);
   void operator=(const TableBuilder&);
 
-  private:
+ private:
   class BaseCompress {
-    public:
-      BaseCompress(Rep* r, Slice raw, Slice block_contents);
-      virtual ~BaseCompress();
+   public:
+    BaseCompress(Rep* r, Slice raw, Slice block_contents);
+    virtual ~BaseCompress();
 
-    public:
-      virtual Status Compress();
+   public:
+    virtual Status Compress();
 
-    public:
-      Rep* r_;
-      Slice raw_;
-      Slice block_contents_;
-      CompressionType type_;
+   public:
+    Rep* r_;
+    Slice raw_;
+    Slice block_contents_;
+    CompressionType type_;
   };
 
   class NoCompress : public BaseCompress {
-    public:
-      NoCompress(Rep* r, Slice raw, Slice block_contents);
-      virtual ~NoCompress();
-    public:
-      virtual Status Compress();
+   public:
+    NoCompress(Rep* r, Slice raw, Slice block_contents);
+    virtual ~NoCompress();
+
+   public:
+    virtual Status Compress();
   };
 
   class SnappyCompress : public BaseCompress {
-    public:
-      SnappyCompress(Rep* r, Slice raw, Slice block_contents);
-      virtual ~SnappyCompress();
-    public:
-      virtual Status Compress();
+   public:
+    SnappyCompress(Rep* r, Slice raw, Slice block_contents);
+    virtual ~SnappyCompress();
+
+   public:
+    virtual Status Compress();
   };
 
   class ZstdCompress : public BaseCompress {
-    public:
-      ZstdCompress(Rep* r, Slice raw, Slice block_contents);
-      virtual ~ZstdCompress();
-    public:
-      virtual Status Compress();
+   public:
+    ZstdCompress(Rep* r, Slice raw, Slice block_contents);
+    virtual ~ZstdCompress();
+
+   public:
+    virtual Status Compress();
   };
 
   class CompressFactory {
-    public:
-      static BaseCompress* CreateCompress(Rep* r, Slice raw, Slice block_contents, CompressionType type);
+   public:
+    static BaseCompress* CreateCompress(Rep* r, Slice raw, Slice block_contents, CompressionType type);
   };
-
 };
 
 }  // namespace leveldb

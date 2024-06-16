@@ -6,6 +6,6 @@
 
 namespace leveldb {
 
-FilterPolicy::~FilterPolicy() { } // NOTE: htt, 过滤器析构
+FilterPolicy::~FilterPolicy() {}  // NOTE: htt, 过滤器析构
 
 }  // namespace leveldb

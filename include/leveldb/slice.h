@@ -22,19 +22,19 @@
 
 namespace leveldb {
 
-class Slice { // NOTE: htt, 提供一个字符串片段引用类型
+class Slice {  // NOTE: htt, 提供一个字符串片段引用类型
  public:
   // Create an empty slice.
-  Slice() : data_(""), size_(0) { }
+  Slice() : data_(""), size_(0) {}
 
   // Create a slice that refers to d[0,n-1].
-  Slice(const char* d, size_t n) : data_(d), size_(n) { }
+  Slice(const char* d, size_t n) : data_(d), size_(n) {}
 
   // Create a slice that refers to the contents of "s"
-  Slice(const std::string& s) : data_(s.data()), size_(s.size()) { }
+  Slice(const std::string& s) : data_(s.data()), size_(s.size()) {}
 
   // Create a slice that refers to s[0,strlen(s)-1]
-  Slice(const char* s) : data_(s), size_(strlen(s)) { }
+  Slice(const char* s) : data_(s), size_(strlen(s)) {}
 
   // Return a pointer to the beginning of the referenced data
   const char* data() const { return data_; }
@@ -53,7 +53,10 @@ class Slice { // NOTE: htt, 提供一个字符串片段引用类型
   }
 
   // Change this slice to refer to an empty array
-  void clear() { data_ = ""; size_ = 0; }
+  void clear() {
+    data_ = "";
+    size_ = 0;
+  }
 
   // Drop the first "n" bytes from this slice.
   void remove_prefix(size_t n) {
@@ -72,38 +75,33 @@ class Slice { // NOTE: htt, 提供一个字符串片段引用类型
   int compare(const Slice& b) const;
 
   // Return true iff "x" is a prefix of "*this"
-  bool starts_with(const Slice& x) const {
-    return ((size_ >= x.size_) &&
-            (memcmp(data_, x.data_, x.size_) == 0));
-  }
+  bool starts_with(const Slice& x) const { return ((size_ >= x.size_) && (memcmp(data_, x.data_, x.size_) == 0)); }
 
  private:
-  const char* data_; // NOTE: htt, slice引用字符串指针
-  size_t size_; // NOTE: htt, slice引用字符串长度
+  const char* data_;  // NOTE: htt, slice引用字符串指针
+  size_t size_;       // NOTE: htt, slice引用字符串长度
 
   // Intentionally copyable
 };
 
 inline bool operator==(const Slice& x, const Slice& y) {
-  return ((x.size() == y.size()) &&
-          (memcmp(x.data(), y.data(), x.size()) == 0));
+  return ((x.size() == y.size()) && (memcmp(x.data(), y.data(), x.size()) == 0));
 }
 
-inline bool operator!=(const Slice& x, const Slice& y) {
-  return !(x == y);
-}
+inline bool operator!=(const Slice& x, const Slice& y) { return !(x == y); }
 
-inline int Slice::compare(const Slice& b) const { // NOTE: htt, 判断两个slice大小
+inline int Slice::compare(const Slice& b) const {  // NOTE: htt, 判断两个slice大小
   const int min_len = (size_ < b.size_) ? size_ : b.size_;
   int r = memcmp(data_, b.data_, min_len);
   if (r == 0) {
-    if (size_ < b.size_) r = -1;
-    else if (size_ > b.size_) r = +1;
+    if (size_ < b.size_)
+      r = -1;
+    else if (size_ > b.size_)
+      r = +1;
   }
   return r;
 }
 
 }  // namespace leveldb
-
 
 #endif  // STORAGE_LEVELDB_INCLUDE_SLICE_H_

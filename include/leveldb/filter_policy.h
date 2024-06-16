@@ -22,7 +22,7 @@ namespace leveldb {
 
 class Slice;
 
-class FilterPolicy { // NOTE: htt, 过滤器策略
+class FilterPolicy {  // NOTE: htt, 过滤器策略
  public:
   virtual ~FilterPolicy();
 
@@ -38,8 +38,8 @@ class FilterPolicy { // NOTE: htt, 过滤器策略
   //
   // Warning: do not change the initial contents of *dst.  Instead,
   // append the newly constructed filter to *dst.
-  virtual void CreateFilter(const Slice* keys, int n, std::string* dst)
-      const = 0; // NOTE: htt, 将keys过滤器keys追加到dst中
+  virtual void CreateFilter(const Slice* keys, int n,
+                            std::string* dst) const = 0;  // NOTE: htt, 将keys过滤器keys追加到dst中
 
   // "filter" contains the data appended by a preceding call to
   // CreateFilter() on this class.  This method must return true if
@@ -63,8 +63,9 @@ class FilterPolicy { // NOTE: htt, 过滤器策略
 // ignores trailing spaces, it would be incorrect to use a
 // FilterPolicy (like NewBloomFilterPolicy) that does not ignore
 // trailing spaces in keys.
-extern const FilterPolicy* NewBloomFilterPolicy(int bits_per_key); // NOTE: htt, 如果定义独立的比较策略，则需要定义独立过滤器策略
+extern const FilterPolicy* NewBloomFilterPolicy(
+    int bits_per_key);  // NOTE: htt, 如果定义独立的比较策略，则需要定义独立过滤器策略
 
-}
+}  // namespace leveldb
 
 #endif  // STORAGE_LEVELDB_INCLUDE_FILTER_POLICY_H_

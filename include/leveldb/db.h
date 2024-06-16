@@ -24,18 +24,18 @@ class WriteBatch;
 // Abstract handle to particular state of a DB.
 // A Snapshot is an immutable object and can therefore be safely
 // accessed from multiple threads without any external synchronization.
-class Snapshot { // NOTE: htt, 快照,并且不可变对象，即可以被多线程并发访问
+class Snapshot {  // NOTE: htt, 快照,并且不可变对象，即可以被多线程并发访问
  protected:
   virtual ~Snapshot();
 };
 
 // A range of keys
-struct Range { // NOTE:htt, user key的range范围
-  Slice start;          // Included in the range
-  Slice limit;          // Not included in the range
+struct Range {  // NOTE:htt, user key的range范围
+  Slice start;  // Included in the range
+  Slice limit;  // Not included in the range
 
-  Range() { }
-  Range(const Slice& s, const Slice& l) : start(s), limit(l) { }
+  Range() {}
+  Range(const Slice& s, const Slice& l) : start(s), limit(l) {}
 };
 
 // A DB is a persistent ordered map from keys to values.
@@ -48,19 +48,15 @@ class DB {
   // OK on success.
   // Stores NULL in *dbptr and returns a non-OK status on error.
   // Caller should delete *dbptr when it is no longer needed.
-  static Status Open(const Options& options,
-                     const std::string& name,
-                     DB** dbptr);
+  static Status Open(const Options& options, const std::string& name, DB** dbptr);
 
-  DB() { }
+  DB() {}
   virtual ~DB();
 
   // Set the database entry for "key" to "value".  Returns OK on success,
   // and a non-OK status on error.
   // Note: consider setting options.sync = true.
-  virtual Status Put(const WriteOptions& options,
-                     const Slice& key,
-                     const Slice& value) = 0;
+  virtual Status Put(const WriteOptions& options, const Slice& key, const Slice& value) = 0;
 
   // Remove the database entry (if any) for "key".  Returns OK on
   // success, and a non-OK status on error.  It is not an error if "key"
@@ -80,8 +76,7 @@ class DB {
   // a status for which Status::IsNotFound() returns true.
   //
   // May return some other Status on an error.
-  virtual Status Get(const ReadOptions& options,
-                     const Slice& key, std::string* value) = 0;
+  virtual Status Get(const ReadOptions& options, const Slice& key, std::string* value) = 0;
 
   // Return a heap-allocated iterator over the contents of the database.
   // The result of NewIterator() is initially invalid (caller must
@@ -125,8 +120,7 @@ class DB {
   // sizes will be one-tenth the size of the corresponding user data size.
   //
   // The results may not include the sizes of recently written data.
-  virtual void GetApproximateSizes(const Range* range, int n,
-                                   uint64_t* sizes) = 0;
+  virtual void GetApproximateSizes(const Range* range, int n, uint64_t* sizes) = 0;
 
   // Compact the underlying storage for the key range [*begin,*end].
   // In particular, deleted and overwritten versions are discarded,

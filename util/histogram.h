@@ -9,10 +9,10 @@
 
 namespace leveldb {
 
-class Histogram { // NOTE: htt, 获取值的分布统计
+class Histogram {  // NOTE: htt, 获取值的分布统计
  public:
-  Histogram() { }
-  ~Histogram() { }
+  Histogram() {}
+  ~Histogram() {}
 
   void Clear();
   void Add(double value);
@@ -25,11 +25,11 @@ class Histogram { // NOTE: htt, 获取值的分布统计
   double max_;
   double num_;
   double sum_;
-  double sum_squares_; // NOTE: htt, 平方和
+  double sum_squares_;  // NOTE: htt, 平方和
 
   enum { kNumBuckets = 154 };
   static const double kBucketLimit[kNumBuckets];
-  double buckets_[kNumBuckets]; // NOTE: htt, 不同桶级别对应的个数
+  double buckets_[kNumBuckets];  // NOTE: htt, 不同桶级别对应的个数
 
   double Median() const;
   double Percentile(double p) const;

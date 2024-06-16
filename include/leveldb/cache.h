@@ -27,18 +27,18 @@ class Cache;
 
 // Create a new cache with a fixed size capacity.  This implementation
 // of Cache uses a least-recently-used eviction policy.
-extern Cache* NewLRUCache(size_t capacity); // NOTE: htt, 获得ShardedLRUCache
+extern Cache* NewLRUCache(size_t capacity);  // NOTE: htt, 获得ShardedLRUCache
 
-class Cache { // HOTE: htt, 缓存, 包括数据插入,查找,清除等
+class Cache {  // HOTE: htt, 缓存, 包括数据插入,查找,清除等
  public:
-  Cache() { }
+  Cache() {}
 
   // Destroys all existing entries by calling the "deleter"
   // function that was passed to the constructor.
   virtual ~Cache();
 
   // Opaque handle to an entry stored in the cache.
-  struct Handle { };
+  struct Handle {};
 
   // Insert a mapping from key->value into the cache and assign it
   // the specified charge against the total cache capacity.
@@ -62,18 +62,20 @@ class Cache { // HOTE: htt, 缓存, 包括数据插入,查找,清除等
   // Release a mapping returned by a previous Lookup().
   // REQUIRES: handle must not have been released yet.
   // REQUIRES: handle must have been returned by a method on *this.
-  virtual void Release(Handle* handle) = 0; // NOTE: htt, 释放Lookup()接口查询的<key,value>映射
+  virtual void Release(Handle* handle) = 0;  // NOTE: htt, 释放Lookup()接口查询的<key,value>映射
 
   // Return the value encapsulated in a handle returned by a
   // successful Lookup().
   // REQUIRES: handle must not have been released yet.
   // REQUIRES: handle must have been returned by a method on *this.
-  virtual void* Value(Handle* handle) = 0; // NOTE: htt, Handle封装的value
+  virtual void* Value(Handle* handle) = 0;  // NOTE: htt, Handle封装的value
 
   // If the cache contains entry for key, erase it.  Note that the
   // underlying entry will be kept around until all existing handles
   // to it have been released.
-  virtual void Erase(const Slice& key) = 0; // NOTE: htt, 清除一个cache中的key,但是直到所有包含key的handle被release, <key,value>才会被清除
+  virtual void Erase(const Slice& key) = 0;  // NOTE: htt,
+                                             // 清除一个cache中的key,但是直到所有包含key的handle被release,
+                                             // <key,value>才会被清除
 
   // Return a new numeric id.  May be used by multiple clients who are
   // sharing the same cache to partition the key space.  Typically the

@@ -13,10 +13,10 @@
 #ifndef STORAGE_LEVELDB_INCLUDE_ENV_H_
 #define STORAGE_LEVELDB_INCLUDE_ENV_H_
 
-#include <string>
-#include <vector>
 #include <stdarg.h>
 #include <stdint.h>
+#include <string>
+#include <vector>
 #include "leveldb/status.h"
 
 namespace leveldb {
@@ -28,9 +28,9 @@ class SequentialFile;
 class Slice;
 class WritableFile;
 
-class Env { // NOTE: htt, DB环境,包括构建随机/顺序/可写文件, 构建日志对象, 文件加锁和放锁等
+class Env {  // NOTE: htt, DB环境,包括构建随机/顺序/可写文件, 构建日志对象, 文件加锁和放锁等
  public:
-  Env() { }
+  Env() {}
   virtual ~Env();
 
   // Return a default environment suitable for the current operating
@@ -38,7 +38,7 @@ class Env { // NOTE: htt, DB环境,包括构建随机/顺序/可写文件, 构�
   // implementation instead of relying on this default environment.
   //
   // The result of Default() belongs to leveldb and must never be deleted.
-  static Env* Default(); // NOTE: htt, 默认环境
+  static Env* Default();  // NOTE: htt, 默认环境
 
   // Create a brand new sequentially-readable file with the specified name.
   // On success, stores a pointer to the new file in *result and returns OK.
@@ -47,7 +47,7 @@ class Env { // NOTE: htt, DB环境,包括构建随机/顺序/可写文件, 构�
   //
   // The returned file will only be accessed by one thread at a time.
   virtual Status NewSequentialFile(const std::string& fname,
-                                   SequentialFile** result) = 0; // NOTE: htt, 创建顺序文件
+                                   SequentialFile** result) = 0;  // NOTE: htt, 创建顺序文件
 
   // Create a brand new random access read-only file with the
   // specified name.  On success, stores a pointer to the new file in
@@ -57,7 +57,7 @@ class Env { // NOTE: htt, DB环境,包括构建随机/顺序/可写文件, 构�
   //
   // The returned file may be concurrently accessed by multiple threads.
   virtual Status NewRandomAccessFile(const std::string& fname,
-                                     RandomAccessFile** result) = 0; // NOTE: htt, 创建随机文件
+                                     RandomAccessFile** result) = 0;  // NOTE: htt, 创建随机文件
 
   // Create an object that writes to a new file with the specified
   // name.  Deletes any existing file with the same name and creates a
@@ -67,32 +67,33 @@ class Env { // NOTE: htt, DB环境,包括构建随机/顺序/可写文件, 构�
   //
   // The returned file will only be accessed by one thread at a time.
   virtual Status NewWritableFile(const std::string& fname,
-                                 WritableFile** result) = 0; // NOTE: htt, 创建可写文件
+                                 WritableFile** result) = 0;  // NOTE: htt, 创建可写文件
 
   // Returns true iff the named file exists.
-  virtual bool FileExists(const std::string& fname) = 0; // NOTE: htt, 检查文件是否存在
+  virtual bool FileExists(const std::string& fname) = 0;  // NOTE: htt, 检查文件是否存在
 
   // Store in *result the names of the children of the specified directory.
   // The names are relative to "dir".
   // Original contents of *results are dropped.
   virtual Status GetChildren(const std::string& dir,
-                             std::vector<std::string>* result) = 0; // NOTE: htt, 获取目录下文件
+                             std::vector<std::string>* result) = 0;  // NOTE: htt, 获取目录下文件
 
   // Delete the named file.
   virtual Status DeleteFile(const std::string& fname) = 0;
 
   // Create the specified directory.
-  virtual Status CreateDir(const std::string& dirname) = 0; // NOTE: htt, 创建目录
+  virtual Status CreateDir(const std::string& dirname) = 0;  // NOTE: htt, 创建目录
 
   // Delete the specified directory.
   virtual Status DeleteDir(const std::string& dirname) = 0;
 
   // Store the size of fname in *file_size.
-  virtual Status GetFileSize(const std::string& fname, uint64_t* file_size) = 0; // NOTE: htt, 获取文件大小
+  virtual Status GetFileSize(const std::string& fname,
+                             uint64_t* file_size) = 0;  // NOTE: htt, 获取文件大小
 
   // Rename file src to target.
   virtual Status RenameFile(const std::string& src,
-                            const std::string& target) = 0; // NOTE: htt, 重命名
+                            const std::string& target) = 0;  // NOTE: htt, 重命名
 
   // Lock the specified file.  Used to prevent concurrent access to
   // the same db by multiple processes.  On failure, stores NULL in
@@ -108,12 +109,13 @@ class Env { // NOTE: htt, DB环境,包括构建随机/顺序/可写文件, 构�
   // to go away.
   //
   // May create the named file if it does not already exist.
-  virtual Status LockFile(const std::string& fname, FileLock** lock) = 0; // NOTE: htt, 对文件进行加锁
+  virtual Status LockFile(const std::string& fname,
+                          FileLock** lock) = 0;  // NOTE: htt, 对文件进行加锁
 
   // Release the lock acquired by a previous successful call to LockFile.
   // REQUIRES: lock was returned by a successful LockFile() call
   // REQUIRES: lock has not already been unlocked.
-  virtual Status UnlockFile(FileLock* lock) = 0; // NOTE: htt, 放锁
+  virtual Status UnlockFile(FileLock* lock) = 0;  // NOTE: htt, 放锁
 
   // Arrange to run "(*function)(arg)" once in a background thread.
   //
@@ -121,29 +123,28 @@ class Env { // NOTE: htt, DB环境,包括构建随机/顺序/可写文件, 构�
   // added to the same Env may run concurrently in different threads.
   // I.e., the caller may not assume that background work items are
   // serialized.
-  virtual void Schedule(
-      void (*function)(void* arg),
-      void* arg) = 0; // NOTE: htt, 后台线程执行 (*function)(arg)
+  virtual void Schedule(void (*function)(void* arg),
+                        void* arg) = 0;  // NOTE: htt, 后台线程执行 (*function)(arg)
 
   // Start a new thread, invoking "function(arg)" within the new thread.
   // When "function(arg)" returns, the thread will be destroyed.
-  virtual void StartThread(void (*function)(void* arg), void* arg) = 0; // NOTE: htt, 启动线程
+  virtual void StartThread(void (*function)(void* arg), void* arg) = 0;  // NOTE: htt, 启动线程
 
   // *path is set to a temporary directory that can be used for testing. It may
   // or many not have just been created. The directory may or may not differ
   // between runs of the same process, but subsequent calls will return the
   // same directory.
-  virtual Status GetTestDirectory(std::string* path) = 0; // NOTE: htt, 获取测试目录
+  virtual Status GetTestDirectory(std::string* path) = 0;  // NOTE: htt, 获取测试目录
 
   // Create and return a log file for storing informational messages.
-  virtual Status NewLogger(const std::string& fname, Logger** result) = 0; // NOTE: htt, 创建日志
+  virtual Status NewLogger(const std::string& fname, Logger** result) = 0;  // NOTE: htt, 创建日志
 
   // Returns the number of micro-seconds since some fixed point in time. Only
   // useful for computing deltas of time.
-  virtual uint64_t NowMicros() = 0; // NOTE: htt, 当前微秒,用于计算时间差
+  virtual uint64_t NowMicros() = 0;  // NOTE: htt, 当前微秒,用于计算时间差
 
   // Sleep/delay the thread for the perscribed number of micro-seconds.
-  virtual void SleepForMicroseconds(int micros) = 0; // NOTE: htt, 线程休眠一定时间
+  virtual void SleepForMicroseconds(int micros) = 0;  // NOTE: htt, 线程休眠一定时间
 
  private:
   // No copying allowed
@@ -152,9 +153,9 @@ class Env { // NOTE: htt, DB环境,包括构建随机/顺序/可写文件, 构�
 };
 
 // A file abstraction for reading sequentially through a file
-class SequentialFile { // NOTE: htt, 顺序读文件
+class SequentialFile {  // NOTE: htt, 顺序读文件
  public:
-  SequentialFile() { }
+  SequentialFile() {}
   virtual ~SequentialFile();
 
   // Read up to "n" bytes from the file.  "scratch[0..n-1]" may be
@@ -165,7 +166,9 @@ class SequentialFile { // NOTE: htt, 顺序读文件
   // If an error was encountered, returns a non-OK status.
   //
   // REQUIRES: External synchronization
-  virtual Status Read(size_t n, Slice* result, char* scratch) = 0; // NOTE: htt, 读取n字符; result指向 scratch, 即scratch为真正存放数据; 不过 result 由于有size(), 即数据少于n时也可以很方便读取
+  virtual Status Read(size_t n, Slice* result,
+                      char* scratch) = 0;  // NOTE: htt, 读取n字符; result指向 scratch, 即scratch为真正存放数据;
+                                           // 不过 result 由于有size(), 即数据少于n时也可以很方便读取
 
   // Skip "n" bytes from the file. This is guaranteed to be no
   // slower that reading the same data, but may be faster.
@@ -174,7 +177,7 @@ class SequentialFile { // NOTE: htt, 顺序读文件
   // file, and Skip will return OK.
   //
   // REQUIRES: External synchronization
-  virtual Status Skip(uint64_t n) = 0; // NOTE: htt, 文件中n个长度
+  virtual Status Skip(uint64_t n) = 0;  // NOTE: htt, 文件中n个长度
 
  private:
   // No copying allowed
@@ -183,9 +186,9 @@ class SequentialFile { // NOTE: htt, 顺序读文件
 };
 
 // A file abstraction for randomly reading the contents of a file.
-class RandomAccessFile { // NOTE: htt, 随机访问文件
+class RandomAccessFile {  // NOTE: htt, 随机访问文件
  public:
-  RandomAccessFile() { }
+  RandomAccessFile() {}
   virtual ~RandomAccessFile();
 
   // Read up to "n" bytes from the file starting at "offset".
@@ -197,8 +200,7 @@ class RandomAccessFile { // NOTE: htt, 随机访问文件
   // status.
   //
   // Safe for concurrent use by multiple threads.
-  virtual Status Read(uint64_t offset, size_t n, Slice* result,
-                      char* scratch) const = 0;
+  virtual Status Read(uint64_t offset, size_t n, Slice* result, char* scratch) const = 0;
 
  private:
   // No copying allowed
@@ -209,9 +211,9 @@ class RandomAccessFile { // NOTE: htt, 随机访问文件
 // A file abstraction for sequential writing.  The implementation
 // must provide buffering since callers may append small fragments
 // at a time to the file.
-class WritableFile { // NOTE: htt, 顺序写文件，需提供缓存(多个小片段同时写入)
+class WritableFile {  // NOTE: htt, 顺序写文件，需提供缓存(多个小片段同时写入)
  public:
-  WritableFile() { }
+  WritableFile() {}
   virtual ~WritableFile();
 
   virtual Status Append(const Slice& data) = 0;
@@ -226,9 +228,9 @@ class WritableFile { // NOTE: htt, 顺序写文件，需提供缓存(多个小�
 };
 
 // An interface for writing log messages.
-class Logger { // NOTE: htt, 打印日志信息
+class Logger {  // NOTE: htt, 打印日志信息
  public:
-  Logger() { }
+  Logger() {}
   virtual ~Logger();
 
   // Write an entry to the log file with the specified format.
@@ -240,12 +242,12 @@ class Logger { // NOTE: htt, 打印日志信息
   void operator=(const Logger&);
 };
 
-
 // Identifies a locked file.
-class FileLock { // NOTE: htt, 文件锁
+class FileLock {  // NOTE: htt, 文件锁
  public:
-  FileLock() { }
+  FileLock() {}
   virtual ~FileLock();
+
  private:
   // No copying allowed
   FileLock(const FileLock&);
@@ -254,78 +256,51 @@ class FileLock { // NOTE: htt, 文件锁
 
 // Log the specified data to *info_log if info_log is non-NULL.
 extern void Log(Logger* info_log, const char* format, ...)
-#   if defined(__GNUC__) || defined(__clang__)
-    __attribute__((__format__ (__printf__, 2, 3)))
-#   endif
-    ; // NOTE: htt, 打印日志
+#if defined(__GNUC__) || defined(__clang__)
+    __attribute__((__format__(__printf__, 2, 3)))
+#endif
+    ;  // NOTE: htt, 打印日志
 
 // A utility routine: write "data" to the named file.
-extern Status WriteStringToFile(Env* env, const Slice& data,
-                                const std::string& fname);
+extern Status WriteStringToFile(Env* env, const Slice& data, const std::string& fname);
 
 // A utility routine: read contents of named file into *data
-extern Status ReadFileToString(Env* env, const std::string& fname,
-                               std::string* data);
+extern Status ReadFileToString(Env* env, const std::string& fname, std::string* data);
 
 // An implementation of Env that forwards all calls to another Env.
 // May be useful to clients who wish to override just part of the
 // functionality of another Env.
-class EnvWrapper : public Env { // NOTE: htt, 采用代理Env实现所有功能
+class EnvWrapper : public Env {  // NOTE: htt, 采用代理Env实现所有功能
  public:
   // Initialize an EnvWrapper that delegates all calls to *t
-  explicit EnvWrapper(Env* t) : target_(t) { }
+  explicit EnvWrapper(Env* t) : target_(t) {}
   virtual ~EnvWrapper();
 
   // Return the target to which this Env forwards all calls
   Env* target() const { return target_; }
 
   // The following text is boilerplate that forwards all methods to target()
-  Status NewSequentialFile(const std::string& f, SequentialFile** r) {
-    return target_->NewSequentialFile(f, r);
-  }
-  Status NewRandomAccessFile(const std::string& f, RandomAccessFile** r) {
-    return target_->NewRandomAccessFile(f, r);
-  }
-  Status NewWritableFile(const std::string& f, WritableFile** r) {
-    return target_->NewWritableFile(f, r);
-  }
+  Status NewSequentialFile(const std::string& f, SequentialFile** r) { return target_->NewSequentialFile(f, r); }
+  Status NewRandomAccessFile(const std::string& f, RandomAccessFile** r) { return target_->NewRandomAccessFile(f, r); }
+  Status NewWritableFile(const std::string& f, WritableFile** r) { return target_->NewWritableFile(f, r); }
   bool FileExists(const std::string& f) { return target_->FileExists(f); }
-  Status GetChildren(const std::string& dir, std::vector<std::string>* r) {
-    return target_->GetChildren(dir, r);
-  }
+  Status GetChildren(const std::string& dir, std::vector<std::string>* r) { return target_->GetChildren(dir, r); }
   Status DeleteFile(const std::string& f) { return target_->DeleteFile(f); }
   Status CreateDir(const std::string& d) { return target_->CreateDir(d); }
   Status DeleteDir(const std::string& d) { return target_->DeleteDir(d); }
-  Status GetFileSize(const std::string& f, uint64_t* s) {
-    return target_->GetFileSize(f, s);
-  }
-  Status RenameFile(const std::string& s, const std::string& t) {
-    return target_->RenameFile(s, t);
-  }
-  Status LockFile(const std::string& f, FileLock** l) {
-    return target_->LockFile(f, l);
-  }
+  Status GetFileSize(const std::string& f, uint64_t* s) { return target_->GetFileSize(f, s); }
+  Status RenameFile(const std::string& s, const std::string& t) { return target_->RenameFile(s, t); }
+  Status LockFile(const std::string& f, FileLock** l) { return target_->LockFile(f, l); }
   Status UnlockFile(FileLock* l) { return target_->UnlockFile(l); }
-  void Schedule(void (*f)(void*), void* a) {
-    return target_->Schedule(f, a);
-  }
-  void StartThread(void (*f)(void*), void* a) {
-    return target_->StartThread(f, a);
-  }
-  virtual Status GetTestDirectory(std::string* path) {
-    return target_->GetTestDirectory(path);
-  }
-  virtual Status NewLogger(const std::string& fname, Logger** result) {
-    return target_->NewLogger(fname, result);
-  }
-  uint64_t NowMicros() {
-    return target_->NowMicros();
-  }
-  void SleepForMicroseconds(int micros) {
-    target_->SleepForMicroseconds(micros);
-  }
+  void Schedule(void (*f)(void*), void* a) { return target_->Schedule(f, a); }
+  void StartThread(void (*f)(void*), void* a) { return target_->StartThread(f, a); }
+  virtual Status GetTestDirectory(std::string* path) { return target_->GetTestDirectory(path); }
+  virtual Status NewLogger(const std::string& fname, Logger** result) { return target_->NewLogger(fname, result); }
+  uint64_t NowMicros() { return target_->NowMicros(); }
+  void SleepForMicroseconds(int micros) { target_->SleepForMicroseconds(micros); }
+
  private:
-  Env* target_; // NOTE: htt, 代理的 Env
+  Env* target_;  // NOTE: htt, 代理的 Env
 };
 
 }  // namespace leveldb

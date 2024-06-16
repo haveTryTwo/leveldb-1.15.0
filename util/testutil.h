@@ -23,8 +23,7 @@ extern std::string RandomKey(Random* rnd, int len);
 // Store in *dst a string of length "len" that will compress to
 // "N*compressed_fraction" bytes and return a Slice that references
 // the generated data.
-extern Slice CompressibleString(Random* rnd, double compressed_fraction,
-                                size_t len, std::string* dst);
+extern Slice CompressibleString(Random* rnd, double compressed_fraction, size_t len, std::string* dst);
 
 // A wrapper that allows injection of errors.
 class ErrorEnv : public EnvWrapper {
@@ -32,12 +31,9 @@ class ErrorEnv : public EnvWrapper {
   bool writable_file_error_;
   int num_writable_file_errors_;
 
-  ErrorEnv() : EnvWrapper(Env::Default()),
-               writable_file_error_(false),
-               num_writable_file_errors_(0) { }
+  ErrorEnv() : EnvWrapper(Env::Default()), writable_file_error_(false), num_writable_file_errors_(0) {}
 
-  virtual Status NewWritableFile(const std::string& fname,
-                                 WritableFile** result) {
+  virtual Status NewWritableFile(const std::string& fname, WritableFile** result) {
     if (writable_file_error_) {
       ++num_writable_file_errors_;
       *result = NULL;

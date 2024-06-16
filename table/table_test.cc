@@ -27,8 +27,7 @@ namespace leveldb {
 static std::string Reverse(const Slice& key) {
   std::string str(key.ToString());
   std::string rev("");
-  for (std::string::reverse_iterator rit = str.rbegin();
-       rit != str.rend(); ++rit) {
+  for (std::string::reverse_iterator rit = str.rbegin(); rit != str.rend(); ++rit) {
     rev.push_back(*rit);
   }
   return rev;
@@ -37,17 +36,13 @@ static std::string Reverse(const Slice& key) {
 namespace {
 class ReverseKeyComparator : public Comparator {
  public:
-  virtual const char* Name() const {
-    return "leveldb.ReverseBytewiseComparator";
-  }
+  virtual const char* Name() const { return "leveldb.ReverseBytewiseComparator"; }
 
   virtual int Compare(const Slice& a, const Slice& b) const {
     return BytewiseComparator()->Compare(Reverse(a), Reverse(b));
   }
 
-  virtual void FindShortestSeparator(
-      std::string* start,
-      const Slice& limit) const {
+  virtual void FindShortestSeparator(std::string* start, const Slice& limit) const {
     std::string s = Reverse(*start);
     std::string l = Reverse(limit);
     BytewiseComparator()->FindShortestSeparator(&s, l);
@@ -79,17 +74,15 @@ namespace {
 struct STLLessThan {
   const Comparator* cmp;
 
-  STLLessThan() : cmp(BytewiseComparator()) { }
-  STLLessThan(const Comparator* c) : cmp(c) { }
-  bool operator()(const std::string& a, const std::string& b) const {
-    return cmp->Compare(Slice(a), Slice(b)) < 0;
-  }
+  STLLessThan() : cmp(BytewiseComparator()) {}
+  STLLessThan(const Comparator* c) : cmp(c) {}
+  bool operator()(const std::string& a, const std::string& b) const { return cmp->Compare(Slice(a), Slice(b)) < 0; }
 };
 }  // namespace
 
-class StringSink: public WritableFile {
+class StringSink : public WritableFile {
  public:
-  ~StringSink() { }
+  ~StringSink() {}
 
   const std::string& contents() const { return contents_; }
 
@@ -106,19 +99,15 @@ class StringSink: public WritableFile {
   std::string contents_;
 };
 
-
-class StringSource: public RandomAccessFile {
+class StringSource : public RandomAccessFile {
  public:
-  StringSource(const Slice& contents)
-      : contents_(contents.data(), contents.size()) {
-  }
+  StringSource(const Slice& contents) : contents_(contents.data(), contents.size()) {}
 
-  virtual ~StringSource() { }
+  virtual ~StringSource() {}
 
   uint64_t Size() const { return contents_.size(); }
 
-  virtual Status Read(uint64_t offset, size_t n, Slice* result,
-                       char* scratch) const {
+  virtual Status Read(uint64_t offset, size_t n, Slice* result, char* scratch) const {
     if (offset > contents_.size()) {
       return Status::InvalidArgument("invalid Read offset");
     }
@@ -140,24 +129,18 @@ typedef std::map<std::string, std::string, STLLessThan> KVMap;
 // BlockBuilder/TableBuilder and Block/Table.
 class Constructor {
  public:
-  explicit Constructor(const Comparator* cmp) : data_(STLLessThan(cmp)) { }
-  virtual ~Constructor() { }
+  explicit Constructor(const Comparator* cmp) : data_(STLLessThan(cmp)) {}
+  virtual ~Constructor() {}
 
-  void Add(const std::string& key, const Slice& value) {
-    data_[key] = value.ToString();
-  }
+  void Add(const std::string& key, const Slice& value) { data_[key] = value.ToString(); }
 
   // Finish constructing the data structure with all the keys that have
   // been added so far.  Returns the keys in sorted order in "*keys"
   // and stores the key/value pairs in "*kvmap"
-  void Finish(const Options& options,
-              std::vector<std::string>* keys,
-              KVMap* kvmap) {
+  void Finish(const Options& options, std::vector<std::string>* keys, KVMap* kvmap) {
     *kvmap = data_;
     keys->clear();
-    for (KVMap::const_iterator it = data_.begin();
-         it != data_.end();
-         ++it) {
+    for (KVMap::const_iterator it = data_.begin(); it != data_.end(); ++it) {
       keys->push_back(it->first);
     }
     data_.clear();
@@ -178,23 +161,16 @@ class Constructor {
   KVMap data_;
 };
 
-class BlockConstructor: public Constructor {
+class BlockConstructor : public Constructor {
  public:
-  explicit BlockConstructor(const Comparator* cmp)
-      : Constructor(cmp),
-        comparator_(cmp),
-        block_(NULL) { }
-  ~BlockConstructor() {
-    delete block_;
-  }
+  explicit BlockConstructor(const Comparator* cmp) : Constructor(cmp), comparator_(cmp), block_(NULL) {}
+  ~BlockConstructor() { delete block_; }
   virtual Status FinishImpl(const Options& options, const KVMap& data) {
     delete block_;
     block_ = NULL;
     BlockBuilder builder(&options);
 
-    for (KVMap::const_iterator it = data.begin();
-         it != data.end();
-         ++it) {
+    for (KVMap::const_iterator it = data.begin(); it != data.end(); ++it) {
       builder.Add(it->first, it->second);
     }
     // Open the block
@@ -206,9 +182,7 @@ class BlockConstructor: public Constructor {
     block_ = new Block(contents);
     return Status::OK();
   }
-  virtual Iterator* NewIterator() const {
-    return block_->NewIterator(comparator_);
-  }
+  virtual Iterator* NewIterator() const { return block_->NewIterator(comparator_); }
 
  private:
   const Comparator* comparator_;
@@ -218,23 +192,16 @@ class BlockConstructor: public Constructor {
   BlockConstructor();
 };
 
-class TableConstructor: public Constructor {
+class TableConstructor : public Constructor {
  public:
-  TableConstructor(const Comparator* cmp)
-      : Constructor(cmp),
-        source_(NULL), table_(NULL) {
-  }
-  ~TableConstructor() {
-    Reset();
-  }
+  TableConstructor(const Comparator* cmp) : Constructor(cmp), source_(NULL), table_(NULL) {}
+  ~TableConstructor() { Reset(); }
   virtual Status FinishImpl(const Options& options, const KVMap& data) {
     Reset();
     StringSink sink;
     TableBuilder builder(options, &sink);
 
-    for (KVMap::const_iterator it = data.begin();
-         it != data.end();
-         ++it) {
+    for (KVMap::const_iterator it = data.begin(); it != data.end(); ++it) {
       builder.Add(it->first, it->second);
       ASSERT_TRUE(builder.status().ok());
     }
@@ -250,13 +217,9 @@ class TableConstructor: public Constructor {
     return Table::Open(table_options, source_, sink.contents().size(), &table_);
   }
 
-  virtual Iterator* NewIterator() const {
-    return table_->NewIterator(ReadOptions());
-  }
+  virtual Iterator* NewIterator() const { return table_->NewIterator(ReadOptions()); }
 
-  uint64_t ApproximateOffsetOf(const Slice& key) const {
-    return table_->ApproximateOffsetOf(key);
-  }
+  uint64_t ApproximateOffsetOf(const Slice& key) const { return table_->ApproximateOffsetOf(key); }
 
  private:
   void Reset() {
@@ -273,9 +236,9 @@ class TableConstructor: public Constructor {
 };
 
 // A helper class that converts internal format keys into user keys
-class KeyConvertingIterator: public Iterator {
+class KeyConvertingIterator : public Iterator {
  public:
-  explicit KeyConvertingIterator(Iterator* iter) : iter_(iter) { }
+  explicit KeyConvertingIterator(Iterator* iter) : iter_(iter) {}
   virtual ~KeyConvertingIterator() { delete iter_; }
   virtual bool Valid() const { return iter_->Valid(); }
   virtual void Seek(const Slice& target) {
@@ -300,9 +263,7 @@ class KeyConvertingIterator: public Iterator {
   }
 
   virtual Slice value() const { return iter_->value(); }
-  virtual Status status() const {
-    return status_.ok() ? iter_->status() : status_;
-  }
+  virtual Status status() const { return status_.ok() ? iter_->status() : status_; }
 
  private:
   mutable Status status_;
@@ -313,66 +274,50 @@ class KeyConvertingIterator: public Iterator {
   void operator=(const KeyConvertingIterator&);
 };
 
-class MemTableConstructor: public Constructor {
+class MemTableConstructor : public Constructor {
  public:
-  explicit MemTableConstructor(const Comparator* cmp)
-      : Constructor(cmp),
-        internal_comparator_(cmp) {
+  explicit MemTableConstructor(const Comparator* cmp) : Constructor(cmp), internal_comparator_(cmp) {
     memtable_ = new MemTable(internal_comparator_);
     memtable_->Ref();
   }
-  ~MemTableConstructor() {
-    memtable_->Unref();
-  }
+  ~MemTableConstructor() { memtable_->Unref(); }
   virtual Status FinishImpl(const Options& options, const KVMap& data) {
     memtable_->Unref();
     memtable_ = new MemTable(internal_comparator_);
     memtable_->Ref();
     int seq = 1;
-    for (KVMap::const_iterator it = data.begin();
-         it != data.end();
-         ++it) {
+    for (KVMap::const_iterator it = data.begin(); it != data.end(); ++it) {
       memtable_->Add(seq, kTypeValue, it->first, it->second);
       seq++;
     }
     return Status::OK();
   }
-  virtual Iterator* NewIterator() const {
-    return new KeyConvertingIterator(memtable_->NewIterator());
-  }
+  virtual Iterator* NewIterator() const { return new KeyConvertingIterator(memtable_->NewIterator()); }
 
  private:
   InternalKeyComparator internal_comparator_;
   MemTable* memtable_;
 };
 
-class DBConstructor: public Constructor {
+class DBConstructor : public Constructor {
  public:
-  explicit DBConstructor(const Comparator* cmp)
-      : Constructor(cmp),
-        comparator_(cmp) {
+  explicit DBConstructor(const Comparator* cmp) : Constructor(cmp), comparator_(cmp) {
     db_ = NULL;
     NewDB();
   }
-  ~DBConstructor() {
-    delete db_;
-  }
+  ~DBConstructor() { delete db_; }
   virtual Status FinishImpl(const Options& options, const KVMap& data) {
     delete db_;
     db_ = NULL;
     NewDB();
-    for (KVMap::const_iterator it = data.begin();
-         it != data.end();
-         ++it) {
+    for (KVMap::const_iterator it = data.begin(); it != data.end(); ++it) {
       WriteBatch batch;
       batch.Put(it->first, it->second);
       ASSERT_TRUE(db_->Write(WriteOptions(), &batch).ok());
     }
     return Status::OK();
   }
-  virtual Iterator* NewIterator() const {
-    return db_->NewIterator(ReadOptions());
-  }
+  virtual Iterator* NewIterator() const { return db_->NewIterator(ReadOptions()); }
 
   virtual DB* db() const { return db_; }
 
@@ -396,12 +341,7 @@ class DBConstructor: public Constructor {
   DB* db_;
 };
 
-enum TestType {
-  TABLE_TEST,
-  BLOCK_TEST,
-  MEMTABLE_TEST,
-  DB_TEST
-};
+enum TestType { TABLE_TEST, BLOCK_TEST, MEMTABLE_TEST, DB_TEST };
 
 struct TestArgs {
   TestType type;
@@ -410,33 +350,33 @@ struct TestArgs {
 };
 
 static const TestArgs kTestArgList[] = {
-  { TABLE_TEST, false, 16 },
-  { TABLE_TEST, false, 1 },
-  { TABLE_TEST, false, 1024 },
-  { TABLE_TEST, true, 16 },
-  { TABLE_TEST, true, 1 },
-  { TABLE_TEST, true, 1024 },
+    {TABLE_TEST, false, 16},
+    {TABLE_TEST, false, 1},
+    {TABLE_TEST, false, 1024},
+    {TABLE_TEST, true, 16},
+    {TABLE_TEST, true, 1},
+    {TABLE_TEST, true, 1024},
 
-  { BLOCK_TEST, false, 16 },
-  { BLOCK_TEST, false, 1 },
-  { BLOCK_TEST, false, 1024 },
-  { BLOCK_TEST, true, 16 },
-  { BLOCK_TEST, true, 1 },
-  { BLOCK_TEST, true, 1024 },
+    {BLOCK_TEST, false, 16},
+    {BLOCK_TEST, false, 1},
+    {BLOCK_TEST, false, 1024},
+    {BLOCK_TEST, true, 16},
+    {BLOCK_TEST, true, 1},
+    {BLOCK_TEST, true, 1024},
 
-  // Restart interval does not matter for memtables
-  { MEMTABLE_TEST, false, 16 },
-  { MEMTABLE_TEST, true, 16 },
+    // Restart interval does not matter for memtables
+    {MEMTABLE_TEST, false, 16},
+    {MEMTABLE_TEST, true, 16},
 
-  // Do not bother with restart interval variations for DB
-  { DB_TEST, false, 16 },
-  { DB_TEST, true, 16 },
+    // Do not bother with restart interval variations for DB
+    {DB_TEST, false, 16},
+    {DB_TEST, true, 16},
 };
 static const int kNumTestArgs = sizeof(kTestArgList) / sizeof(kTestArgList[0]);
 
 class Harness {
  public:
-  Harness() : constructor_(NULL) { }
+  Harness() : constructor_(NULL) {}
 
   void Init(const TestArgs& args) {
     delete constructor_;
@@ -466,13 +406,9 @@ class Harness {
     }
   }
 
-  ~Harness() {
-    delete constructor_;
-  }
+  ~Harness() { delete constructor_; }
 
-  void Add(const std::string& key, const std::string& value) {
-    constructor_->Add(key, value);
-  }
+  void Add(const std::string& key, const std::string& value) { constructor_->Add(key, value); }
 
   void Test(Random* rnd) {
     std::vector<std::string> keys;
@@ -484,14 +420,11 @@ class Harness {
     TestRandomAccess(rnd, keys, data);
   }
 
-  void TestForwardScan(const std::vector<std::string>& keys,
-                       const KVMap& data) {
+  void TestForwardScan(const std::vector<std::string>& keys, const KVMap& data) {
     Iterator* iter = constructor_->NewIterator();
     ASSERT_TRUE(!iter->Valid());
     iter->SeekToFirst();
-    for (KVMap::const_iterator model_iter = data.begin();
-         model_iter != data.end();
-         ++model_iter) {
+    for (KVMap::const_iterator model_iter = data.begin(); model_iter != data.end(); ++model_iter) {
       ASSERT_EQ(ToString(data, model_iter), ToString(iter));
       iter->Next();
     }
@@ -499,14 +432,11 @@ class Harness {
     delete iter;
   }
 
-  void TestBackwardScan(const std::vector<std::string>& keys,
-                        const KVMap& data) {
+  void TestBackwardScan(const std::vector<std::string>& keys, const KVMap& data) {
     Iterator* iter = constructor_->NewIterator();
     ASSERT_TRUE(!iter->Valid());
     iter->SeekToLast();
-    for (KVMap::const_reverse_iterator model_iter = data.rbegin();
-         model_iter != data.rend();
-         ++model_iter) {
+    for (KVMap::const_reverse_iterator model_iter = data.rbegin(); model_iter != data.rend(); ++model_iter) {
       ASSERT_EQ(ToString(data, model_iter), ToString(iter));
       iter->Prev();
     }
@@ -514,9 +444,7 @@ class Harness {
     delete iter;
   }
 
-  void TestRandomAccess(Random* rnd,
-                        const std::vector<std::string>& keys,
-                        const KVMap& data) {
+  void TestRandomAccess(Random* rnd, const std::vector<std::string>& keys, const KVMap& data) {
     static const bool kVerbose = false;
     Iterator* iter = constructor_->NewIterator();
     ASSERT_TRUE(!iter->Valid());
@@ -546,8 +474,7 @@ class Harness {
         case 2: {
           std::string key = PickRandomKey(rnd, keys);
           model_iter = data.lower_bound(key);
-          if (kVerbose) fprintf(stderr, "Seek '%s'\n",
-                                EscapeString(key).c_str());
+          if (kVerbose) fprintf(stderr, "Seek '%s'\n", EscapeString(key).c_str());
           iter->Seek(Slice(key));
           ASSERT_EQ(ToString(data, model_iter), ToString(iter));
           break;
@@ -558,7 +485,7 @@ class Harness {
             if (kVerbose) fprintf(stderr, "Prev\n");
             iter->Prev();
             if (model_iter == data.begin()) {
-              model_iter = data.end();   // Wrap around to invalid value
+              model_iter = data.end();  // Wrap around to invalid value
             } else {
               --model_iter;
             }
@@ -592,8 +519,7 @@ class Harness {
     }
   }
 
-  std::string ToString(const KVMap& data,
-                       const KVMap::const_reverse_iterator& it) {
+  std::string ToString(const KVMap& data, const KVMap::const_reverse_iterator& it) {
     if (it == data.rend()) {
       return "END";
     } else {
@@ -621,8 +547,8 @@ class Harness {
           break;
         case 1: {
           // Attempt to return something smaller than an existing key
-          if (result.size() > 0 && result[result.size()-1] > '\0') {
-            result[result.size()-1]--;
+          if (result.size() > 0 && result[result.size() - 1] > '\0') {
+            result[result.size() - 1]--;
           }
           break;
         }
@@ -717,16 +643,13 @@ TEST(Harness, Randomized) {
   for (int i = 0; i < kNumTestArgs; i++) {
     Init(kTestArgList[i]);
     Random rnd(test::RandomSeed() + 5);
-    for (int num_entries = 0; num_entries < 2000;
-         num_entries += (num_entries < 50 ? 1 : 200)) {
+    for (int num_entries = 0; num_entries < 2000; num_entries += (num_entries < 50 ? 1 : 200)) {
       if ((num_entries % 10) == 0) {
-        fprintf(stderr, "case %d of %d: num_entries = %d\n",
-                (i + 1), int(kNumTestArgs), num_entries);
+        fprintf(stderr, "case %d of %d: num_entries = %d\n", (i + 1), int(kNumTestArgs), num_entries);
       }
       for (int e = 0; e < num_entries; e++) {
         std::string v;
-        Add(test::RandomKey(&rnd, rnd.Skewed(4)),
-            test::RandomString(&rnd, rnd.Skewed(5), &v).ToString());
+        Add(test::RandomKey(&rnd, rnd.Skewed(4)), test::RandomString(&rnd, rnd.Skewed(5), &v).ToString());
       }
       Test(&rnd);
     }
@@ -735,13 +658,12 @@ TEST(Harness, Randomized) {
 
 TEST(Harness, RandomizedLongDB) {
   Random rnd(test::RandomSeed());
-  TestArgs args = { DB_TEST, false, 16 };
+  TestArgs args = {DB_TEST, false, 16};
   Init(args);
   int num_entries = 100000;
   for (int e = 0; e < num_entries; e++) {
     std::string v;
-    Add(test::RandomKey(&rnd, rnd.Skewed(4)),
-        test::RandomString(&rnd, rnd.Skewed(5), &v).ToString());
+    Add(test::RandomKey(&rnd, rnd.Skewed(4)), test::RandomString(&rnd, rnd.Skewed(5), &v).ToString());
   }
   Test(&rnd);
 
@@ -757,7 +679,7 @@ TEST(Harness, RandomizedLongDB) {
   ASSERT_GT(files, 0);
 }
 
-class MemTableTest { };
+class MemTableTest {};
 
 TEST(MemTableTest, Simple) {
   InternalKeyComparator cmp(BytewiseComparator());
@@ -774,9 +696,7 @@ TEST(MemTableTest, Simple) {
   Iterator* iter = memtable->NewIterator();
   iter->SeekToFirst();
   while (iter->Valid()) {
-    fprintf(stderr, "key: '%s' -> '%s'\n",
-            iter->key().ToString().c_str(),
-            iter->value().ToString().c_str());
+    fprintf(stderr, "key: '%s' -> '%s'\n", iter->key().ToString().c_str(), iter->value().ToString().c_str());
     iter->Next();
   }
 
@@ -787,15 +707,13 @@ TEST(MemTableTest, Simple) {
 static bool Between(uint64_t val, uint64_t low, uint64_t high) {
   bool result = (val >= low) && (val <= high);
   if (!result) {
-    fprintf(stderr, "Value %llu is not in range [%llu, %llu]\n",
-            (unsigned long long)(val),
-            (unsigned long long)(low),
+    fprintf(stderr, "Value %llu is not in range [%llu, %llu]\n", (unsigned long long)(val), (unsigned long long)(low),
             (unsigned long long)(high));
   }
   return result;
 }
 
-class TableTest { };
+class TableTest {};
 
 TEST(TableTest, ApproximateOffsetOfPlain) {
   TableConstructor c(BytewiseComparator());
@@ -813,18 +731,17 @@ TEST(TableTest, ApproximateOffsetOfPlain) {
   options.compression = kNoCompression;
   c.Finish(options, &keys, &kvmap);
 
-  ASSERT_TRUE(Between(c.ApproximateOffsetOf("abc"),       0,      0));
-  ASSERT_TRUE(Between(c.ApproximateOffsetOf("k01"),       0,      0));
-  ASSERT_TRUE(Between(c.ApproximateOffsetOf("k01a"),      0,      0));
-  ASSERT_TRUE(Between(c.ApproximateOffsetOf("k02"),       0,      0));
-  ASSERT_TRUE(Between(c.ApproximateOffsetOf("k03"),       0,      0));
-  ASSERT_TRUE(Between(c.ApproximateOffsetOf("k04"),   10000,  11000));
+  ASSERT_TRUE(Between(c.ApproximateOffsetOf("abc"), 0, 0));
+  ASSERT_TRUE(Between(c.ApproximateOffsetOf("k01"), 0, 0));
+  ASSERT_TRUE(Between(c.ApproximateOffsetOf("k01a"), 0, 0));
+  ASSERT_TRUE(Between(c.ApproximateOffsetOf("k02"), 0, 0));
+  ASSERT_TRUE(Between(c.ApproximateOffsetOf("k03"), 0, 0));
+  ASSERT_TRUE(Between(c.ApproximateOffsetOf("k04"), 10000, 11000));
   ASSERT_TRUE(Between(c.ApproximateOffsetOf("k04a"), 210000, 211000));
-  ASSERT_TRUE(Between(c.ApproximateOffsetOf("k05"),  210000, 211000));
-  ASSERT_TRUE(Between(c.ApproximateOffsetOf("k06"),  510000, 511000));
-  ASSERT_TRUE(Between(c.ApproximateOffsetOf("k07"),  510000, 511000));
-  ASSERT_TRUE(Between(c.ApproximateOffsetOf("xyz"),  610000, 612000));
-
+  ASSERT_TRUE(Between(c.ApproximateOffsetOf("k05"), 210000, 211000));
+  ASSERT_TRUE(Between(c.ApproximateOffsetOf("k06"), 510000, 511000));
+  ASSERT_TRUE(Between(c.ApproximateOffsetOf("k07"), 510000, 511000));
+  ASSERT_TRUE(Between(c.ApproximateOffsetOf("xyz"), 610000, 612000));
 }
 
 static bool SnappyCompressionSupported() {
@@ -853,16 +770,14 @@ TEST(TableTest, ApproximateOffsetOfCompressed) {
   options.compression = kSnappyCompression;
   c.Finish(options, &keys, &kvmap);
 
-  ASSERT_TRUE(Between(c.ApproximateOffsetOf("abc"),       0,      0));
-  ASSERT_TRUE(Between(c.ApproximateOffsetOf("k01"),       0,      0));
-  ASSERT_TRUE(Between(c.ApproximateOffsetOf("k02"),       0,      0));
-  ASSERT_TRUE(Between(c.ApproximateOffsetOf("k03"),    2000,   3000));
-  ASSERT_TRUE(Between(c.ApproximateOffsetOf("k04"),    2000,   3000));
-  ASSERT_TRUE(Between(c.ApproximateOffsetOf("xyz"),    4000,   6000));
+  ASSERT_TRUE(Between(c.ApproximateOffsetOf("abc"), 0, 0));
+  ASSERT_TRUE(Between(c.ApproximateOffsetOf("k01"), 0, 0));
+  ASSERT_TRUE(Between(c.ApproximateOffsetOf("k02"), 0, 0));
+  ASSERT_TRUE(Between(c.ApproximateOffsetOf("k03"), 2000, 3000));
+  ASSERT_TRUE(Between(c.ApproximateOffsetOf("k04"), 2000, 3000));
+  ASSERT_TRUE(Between(c.ApproximateOffsetOf("xyz"), 4000, 6000));
 }
 
 }  // namespace leveldb
 
-int main(int argc, char** argv) {
-  return leveldb::test::RunAllTests();
-}
+int main(int argc, char** argv) { return leveldb::test::RunAllTests(); }

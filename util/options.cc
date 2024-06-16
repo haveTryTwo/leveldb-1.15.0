@@ -9,21 +9,19 @@
 
 namespace leveldb {
 
-Options::Options() // NOTE: htt, options默认值
-    : comparator(BytewiseComparator()), // NOTE:htt, 默认为BytewiseComparatorImpl
+Options::Options()                       // NOTE: htt, options默认值
+    : comparator(BytewiseComparator()),  // NOTE:htt, 默认为BytewiseComparatorImpl
       create_if_missing(false),
       error_if_exists(false),
       paranoid_checks(false),
-      env(Env::Default()), // NOTE:htt, 生成默认的Env,即PosixEnv
+      env(Env::Default()),  // NOTE:htt, 生成默认的Env,即PosixEnv
       info_log(NULL),
-      write_buffer_size(4<<20),
+      write_buffer_size(4 << 20),
       max_open_files(1000),
       block_cache(NULL),
       block_size(4096),
       block_restart_interval(16),
       compression(kSnappyCompression),
-      filter_policy(NULL) {
-}
-
+      filter_policy(NULL) {}
 
 }  // namespace leveldb

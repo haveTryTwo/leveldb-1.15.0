@@ -18,33 +18,31 @@ class EnvPosixTest {
 
  public:
   Env* env_;
-  EnvPosixTest() : env_(Env::Default()) { }
+  EnvPosixTest() : env_(Env::Default()) {}
 };
 
-static void SetBool(void* ptr) {
-  reinterpret_cast<port::AtomicPointer*>(ptr)->NoBarrier_Store(ptr);
-}
+static void SetBool(void* ptr) { reinterpret_cast<port::AtomicPointer*>(ptr)->NoBarrier_Store(ptr); }
 
 TEST(EnvPosixTest, RunImmediately) {
-  port::AtomicPointer called (NULL);
+  port::AtomicPointer called(NULL);
   env_->Schedule(&SetBool, &called);
   Env::Default()->SleepForMicroseconds(kDelayMicros);
   ASSERT_TRUE(called.NoBarrier_Load() != NULL);
 }
 
 TEST(EnvPosixTest, RunMany) {
-  port::AtomicPointer last_id (NULL);
+  port::AtomicPointer last_id(NULL);
 
   struct CB {
-    port::AtomicPointer* last_id_ptr;   // Pointer to shared slot
-    uintptr_t id;             // Order# for the execution of this callback
+    port::AtomicPointer* last_id_ptr;  // Pointer to shared slot
+    uintptr_t id;                      // Order# for the execution of this callback
 
-    CB(port::AtomicPointer* p, int i) : last_id_ptr(p), id(i) { }
+    CB(port::AtomicPointer* p, int i) : last_id_ptr(p), id(i) {}
 
     static void Run(void* v) {
       CB* cb = reinterpret_cast<CB*>(v);
       void* cur = cb->last_id_ptr->NoBarrier_Load();
-      ASSERT_EQ(cb->id-1, reinterpret_cast<uintptr_t>(cur));
+      ASSERT_EQ(cb->id - 1, reinterpret_cast<uintptr_t>(cur));
       cb->last_id_ptr->Release_Store(reinterpret_cast<void*>(cb->id));
     }
   };
@@ -99,6 +97,4 @@ TEST(EnvPosixTest, StartThread) {
 
 }  // namespace leveldb
 
-int main(int argc, char** argv) {
-  return leveldb::test::RunAllTests();
-}
+int main(int argc, char** argv) { return leveldb::test::RunAllTests(); }

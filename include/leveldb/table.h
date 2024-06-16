@@ -21,7 +21,7 @@ class TableCache;
 // A Table is a sorted map from strings to strings.  Tables are
 // immutable and persistent.  A Table may be safely accessed from
 // multiple threads without external synchronization.
-class Table { // NOTE:htt, 从sstable中读取数据,并对Block进行缓存
+class Table {  // NOTE:htt, 从sstable中读取数据,并对Block进行缓存
  public:
   // Attempt to open the table that is stored in bytes [0..file_size)
   // of "file", and read the metadata entries necessary to allow
@@ -35,10 +35,7 @@ class Table { // NOTE:htt, 从sstable中读取数据,并对Block进行缓存
   // for the duration of the returned table's lifetime.
   //
   // *file must remain live while this Table is in use.
-  static Status Open(const Options& options,
-                     RandomAccessFile* file,
-                     uint64_t file_size,
-                     Table** table);
+  static Status Open(const Options& options, RandomAccessFile* file, uint64_t file_size, Table** table);
 
   ~Table();
 
@@ -66,11 +63,8 @@ class Table { // NOTE:htt, 从sstable中读取数据,并对Block进行缓存
   // to Seek(key).  May not make such a call if filter policy says
   // that key is not present.
   friend class TableCache;
-  Status InternalGet(
-      const ReadOptions&, const Slice& key,
-      void* arg,
-      void (*handle_result)(void* arg, const Slice& k, const Slice& v));
-
+  Status InternalGet(const ReadOptions&, const Slice& key, void* arg,
+                     void (*handle_result)(void* arg, const Slice& k, const Slice& v));
 
   void ReadMeta(const Footer& footer);
   void ReadFilter(const Slice& filter_handle_value);
