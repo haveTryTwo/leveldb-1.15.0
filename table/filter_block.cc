@@ -19,7 +19,7 @@ FilterBlockBuilder::FilterBlockBuilder(const FilterPolicy* policy) : policy_(pol
 
 void FilterBlockBuilder::StartBlock(
     uint64_t block_offset) {  // NOTE:htt, key添加完毕后,生成对应block的bloomFilter并添加result中
-  uint64_t filter_index = (block_offset / kFilterBase);  // NOTE:htt, block大小超过2K
+  uint64_t filter_index = (block_offset / kFilterBase);  // NOTE:htt, bloom filter按2k步长
   assert(filter_index >= filter_offsets_.size());
   while (filter_index >
          filter_offsets_.size()) {  // NOTE:htt,
@@ -31,7 +31,7 @@ void FilterBlockBuilder::StartBlock(
 void FilterBlockBuilder::AddKey(
     const Slice& key) {  // NOTE:htt, 添加一个key,对应在一个block内,超过一个block则生成bloom filter
   Slice k = key;
-  start_.push_back(keys_.size());    // NOTE:htt, 记录新key在keys中的偏移
+  start_.push_back(keys_.size());    // NOTE:htt, 记录新key在keys中的偏移,比如首次添加字段为0
   keys_.append(k.data(), k.size());  // NOTE:htt, 包括keys到字符串中
 }
 
@@ -55,13 +55,16 @@ Slice FilterBlockBuilder::Finish() {  // NOTE:htt,
   return Slice(result_);
 }
 
-void FilterBlockBuilder::GenerateFilter() {  // NOTE: htt,
-                                             // 将一批key生成bloomFilter,保存到result,由filter
+void FilterBlockBuilder::GenerateFilter() {  // NOTE: htt, 将一批key生成bloomFilter,保存到result,由filter
                                              // offsets记录每个偏移
-  const size_t num_keys = start_.size();     // NOTE:htt, key的个数为0
+  const size_t num_keys = start_.size();     // NOTE:htt, key的个数
   if (num_keys == 0) {
     // Fast path if there are no keys for this filter
-    filter_offsets_.push_back(result_.size());
+    filter_offsets_.push_back(result_.size()); // NOTE:htt, 一个block大小超过2k(默认4k),那么预计生成2个
+                                               // bloom filter,keys信息全部在第1个bloom filter,第2个bloom
+                                               // filter 记录第1个result的偏移
+                                               // 优点:方便根据2k直接定位,解耦filter和data block联系
+                                               // 缺点:有空洞,一个data block会集中对应第1个2k
     return;
   }
 
@@ -104,7 +107,7 @@ bool FilterBlockReader::KeyMayMatch(
     uint32_t start = DecodeFixed32(offset_ + index * 4);  // NOTE:htt, 找到block offset对应的bloomFilter偏移起始位置
     uint32_t limit = DecodeFixed32(offset_ + index * 4 +
                                    4);  // NOTE:htt, block offset对应bloomFilter的结束位置(即下一个block起始位置)
-    if (start <= limit && limit <= (offset_ - data_)) {
+    if (start <= limit && limit <= (offset_ - data_)) { // TODO:htt, 如何确定FilterBlock和IndexBlock的一致性,因FilterBlock按2K分数据,而IndexBlock按4k来分DataBlock,两者的间隔不一致,数据如何对应
       Slice filter = Slice(data_ + start, limit - start);
       return policy_->KeyMayMatch(key, filter);  // NOTE:htt, 通过bloomFilter判断key是否存在
     } else if (start == limit) {
